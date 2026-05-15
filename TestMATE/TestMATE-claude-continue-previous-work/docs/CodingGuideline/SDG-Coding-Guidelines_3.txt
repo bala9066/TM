@@ -1,0 +1,166 @@
+/*
+===============================================================================
+SDG Coding Guidelines for AI Code Generation
+===============================================================================
+
+PURPOSE:
+  - Standardize code structure and style to improve readability,
+    maintainability, and consistency.
+  - Enable unambiguous, intuitive, and precise code generation across projects.
+  - Preserve programmer creativity within a minimal yet rigorous framework.
+
+===============================================================================
+1. VARIABLE NAMING CONVENTIONS:
+-------------------------------------------------------------------------------
+Core Naming Format:
+  <scope prefix><datatype prefix><Mnemonic>
+
+Scope Prefixes:
+  - m_ : Member variable
+  - g_ : Global variable
+
+Datatype Prefixes:
+  - b   : Boolean (e.g., bool bStillGoing)
+  - c   : Character (e.g., char cLetterGrade)
+  - str : C++ String (e.g., string strFirstName)
+  - si  : Short integer (e.g., short siChairs)
+  - i   : Integer (e.g., int iCars)
+  - li  : Long integer (e.g., long liStars)
+  - f   : Floating point (e.g., float fPercent)
+  - d   : Double precision (e.g., double dMiles)
+  - ld  : Long double (e.g., long double ldLightYears)
+  - sz  : Null-terminated string (e.g., char szName[NAME_LEN])
+  - if, is, of, os : File stream and I/O stream prefixes
+  - S, C : Struct and Class declarations
+
+Additional Modifiers:
+  - u   : Unsigned (e.g., unsigned short usStudents)
+  - k   : Constant parameter (e.g., const long kliGalaxies)
+  - r   : Reference parameter (e.g., long &rliGalaxies)
+  - arr : Array (e.g., Float arrfTemp[MAX_TEMP])
+  - p   : Pointer (e.g., char *pcGrade)
+
+Usage Rules:
+  - Avoid multiple variables with similar semantics in one scope.
+  - Each variable should have a single, clearly defined purpose.
+  - Bit field variables may omit the datatype prefix.
+
+===============================================================================
+2. FUNCTION NAMING & STRUCTURE:
+-------------------------------------------------------------------------------
+Naming Guidelines:
+  - Function names should start with a verb (e.g., InitNameArray, CloseDialog).
+  - Start the function name with a capital letter.
+  - In module-specific cases, prefix with a module identifier if needed.
+
+Parameter Guidelines:
+  - Limit functions to a maximum of six parameters.
+  - Order parameters with inputs first (prefix “in_”) then outputs (prefix “out_”).
+
+Best Practices:
+  - Provide meaningful inline comments.
+  - Initialize local variables before use.
+  - Validate parameter ranges and memory allocations.
+  - Avoid hardcoded values.
+  - Limit nesting (spawning level ≤ 2).
+  - Return negative error codes (using a defined base) for failure.
+  - For global/exported functions, include a driver/module prefix.
+
+===============================================================================
+3. UI OBJECT NAMING CONVENTIONS:
+-------------------------------------------------------------------------------
+Use consistent prefixes for UI controls:
+  - CheckBox:      Chk  (e.g., ChkReadOnly)
+  - ComboBox:      Cbo  (e.g., CboEnglish)
+  - Button:        Cmd  (e.g., CmdExit)
+  - Dialog:        Dlg
+  - Form:          Frm
+  - Frame:         Fra
+  - HScrollBar:    Hsb
+  - ListBox:       Lst
+  - ListView:      Lvw
+  - Menu:          Mnu
+  - PictureBox:    Pic
+  - ProgressBar:   Prg
+  - Slider:        Sld
+  - Spin:          Spn
+  - StatusBar:     Sta
+  - TextBox:       Txt
+  - ToolBar:       Tlb
+  - TreeView:      Tre
+  - VScrollBar:    Vsb
+
+===============================================================================
+4. DOCUMENTATION REQUIREMENTS:
+-------------------------------------------------------------------------------
+File Header Template (insert at the top of each source file):
+  /**************************************************************************
+   // File Name:
+   // Author:
+   // Created Date:
+   // Description:
+   **************************************************************************/
+
+Function Header Template (precede each function): 
+  - Doxygen format for each function in .h file alone and .cpp or c file only description is enough.
+
+===============================================================================
+5. CODE FORMATTING STANDARDS:
+-------------------------------------------------------------------------------
+Structure:
+  - Separate declarations from executable statements with blank lines.
+  - Insert blank lines between logical code blocks.
+
+Spacing:
+  - Avoid double line spacing.
+  - No spaces after an opening parenthesis or before a closing parenthesis.
+  - Always include a space after commas and semicolons.
+
+===============================================================================
+6. ADDITIONAL GUIDELINES FOR CODE QUALITY & AI IMPLEMENTATION:
+-------------------------------------------------------------------------------
+Code Review & Quality Assurance:
+  - Enforce mandatory peer reviews.
+  - Integrate automated unit, integration, and regression tests.
+  - Use static analysis tools (e.g., ESLint, clang-tidy, SonarQube).
+
+Version Control & Branching Strategy:
+  - Follow a consistent commit message format.
+  - Use a branching model (e.g., GitFlow) for development.
+
+Exception Handling & Logging:
+  - Implement standardized error codes (negative for errors).
+  - Use try/catch blocks with clear error messages.
+  - Set up logging with defined levels (INFO, WARN, ERROR).
+
+Security & Performance:
+  - Validate all inputs; avoid vulnerabilities (e.g., buffer overflows).
+  - Optimize critical paths and profile code to remove bottlenecks.
+  - Adhere to data privacy and secure coding practices.
+
+CI/CD Integration:
+  - Automate builds, tests, and deployments through CI/CD pipelines.
+  - Include automated checks for code quality and security in pipelines.
+
+AI-SPECIFIC IMPLEMENTATION:
+  - Ensure proper handling, preprocessing, and validation of training/testing data.
+  - Document model training, performance metrics, and explainability efforts.
+  - Follow compliance standards for data privacy and security.
+
+Architecture & Design Principles:
+  - Use established design patterns (e.g., Singleton, Factory, Observer).
+  - Adhere to SOLID principles for maintainability and scalability.
+  - Modularize code for easier testing and reusability.
+
+===============================================================================
+USAGE NOTES:
+  - This guideline document should be referenced by the AI model whenever
+    generating or reviewing code.
+  - The AI should prioritize readability, maintainability, and standardization.
+  - When in doubt, default to the guidelines herein and add inline comments
+    to explain decisions made.
+
+===============================================================================
+END OF GUIDELINES
+===============================================================================
+*/

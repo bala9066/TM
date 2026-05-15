@@ -1,0 +1,49 @@
+{
+  "id": "ADV-001",
+  "name": "Advanced Multi-Phase Test Sequence",
+  "version": "2.1.0",
+  "steps": [
+    {"id": "INIT-001", "name": "System Initialization", "type": "action", "enabled": true},
+    {"id": "INIT-002", "name": "Load Test Configuration", "type": "action", "enabled": true},
+    {"id": "INIT-003", "name": "Connect to DUT", "type": "action", "enabled": true},
+    {"id": "INIT-004", "name": "Verify Connection", "type": "validation", "enabled": true},
+
+    {"id": "CAL-001", "name": "Calibration - Initialize", "type": "action", "enabled": true},
+    {"id": "CAL-002", "name": "Calibration - Measure Reference", "type": "measurement", "enabled": true},
+    {"id": "CAL-003", "name": "Calibration - Validate Offset", "type": "validation", "enabled": true},
+    {"id": "CAL-004", "name": "Calibration - Store Values", "type": "action", "enabled": true},
+
+    {"id": "PWR-001", "name": "Power Sequencing - Apply 3.3V", "type": "action", "enabled": true},
+    {"id": "PWR-002", "name": "Power Sequencing - Wait 100ms", "type": "wait", "enabled": true},
+    {"id": "PWR-003", "name": "Power Sequencing - Measure 3.3V Rail", "type": "measurement", "enabled": true},
+    {"id": "PWR-004", "name": "Power Sequencing - Validate 3.3V", "type": "validation", "enabled": true},
+    {"id": "PWR-005", "name": "Power Sequencing - Apply 1.8V", "type": "action", "enabled": true},
+    {"id": "PWR-006", "name": "Power Sequencing - Wait 50ms", "type": "wait", "enabled": true},
+    {"id": "PWR-007", "name": "Power Sequencing - Measure 1.8V Rail", "type": "measurement", "enabled": true},
+    {"id": "PWR-008", "name": "Power Sequencing - Validate 1.8V", "type": "validation", "enabled": true},
+
+    {"id": "FUNC-001", "name": "Functional Test - Reset Device", "type": "action", "enabled": true},
+    {"id": "FUNC-002", "name": "Functional Test - Wait for Boot", "type": "wait", "enabled": true},
+    {"id": "FUNC-003", "name": "Functional Test - Read Device ID", "type": "measurement", "enabled": true},
+    {"id": "FUNC-004", "name": "Functional Test - Validate Device ID", "type": "validation", "enabled": true},
+    {"id": "FUNC-005", "name": "Functional Test - Run Self-Test", "type": "action", "enabled": true},
+    {"id": "FUNC-006", "name": "Functional Test - Check Self-Test Results", "type": "validation", "enabled": true},
+
+    {"id": "PERF-001", "name": "Performance Test - Set Load Conditions", "type": "action", "enabled": true},
+    {"id": "PERF-002", "name": "Performance Test - Measure Current Draw", "type": "measurement", "enabled": true},
+    {"id": "PERF-003", "name": "Performance Test - Validate Current Limits", "type": "validation", "enabled": true},
+    {"id": "PERF-004", "name": "Performance Test - Measure Response Time", "type": "measurement", "enabled": true},
+    {"id": "PERF-005", "name": "Performance Test - Validate Timing", "type": "validation", "enabled": true},
+
+    {"id": "STRESS-001", "name": "Stress Test - Apply Maximum Load", "type": "action", "enabled": true},
+    {"id": "STRESS-002", "name": "Stress Test - Monitor Temperature", "type": "measurement", "enabled": true},
+    {"id": "STRESS-003", "name": "Stress Test - Validate Thermal Limits", "type": "validation", "enabled": true},
+    {"id": "STRESS-004", "name": "Stress Test - Run for 30 Seconds", "type": "wait", "enabled": true},
+    {"id": "STRESS-005", "name": "Stress Test - Verify Stability", "type": "validation", "enabled": true},
+
+    {"id": "CLEAN-001", "name": "Cleanup - Power Down Device", "type": "action", "enabled": true},
+    {"id": "CLEAN-002", "name": "Cleanup - Wait for Discharge", "type": "wait", "enabled": true},
+    {"id": "CLEAN-003", "name": "Cleanup - Disconnect DUT", "type": "action", "enabled": true},
+    {"id": "CLEAN-004", "name": "Cleanup - Generate Report", "type": "action", "enabled": true}
+  ]
+}

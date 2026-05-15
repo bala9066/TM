@@ -1,0 +1,31 @@
+<!DOCTYPE RCC>
+<RCC version="1.0">
+  <qresource prefix="/">
+    <!-- Application Logo -->
+    <file>icons/testmate.svg</file>
+  </qresource>
+
+  <qresource prefix="/icons">
+    <!-- File Operations -->
+    <file>icons/new.svg</file>
+    <file>icons/open.svg</file>
+    <file>icons/save.svg</file>
+
+    <!-- Execution Controls -->
+    <file>icons/run.svg</file>
+    <file>icons/pause.svg</file>
+    <file>icons/stop.svg</file>
+    <file>icons/abort.svg</file>
+
+    <!-- Editing Operations -->
+    <file>icons/add.svg</file>
+    <file>icons/edit.svg</file>
+    <file>icons/delete.svg</file>
+    <file>icons/up.svg</file>
+    <file>icons/down.svg</file>
+
+    <!-- Other Actions -->
+    <file>icons/validate.svg</file>
+    <file>icons/help.svg</file>
+  </qresource>
+</RCC>

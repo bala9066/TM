@@ -1,0 +1,14 @@
+# Target labels
+ sqlite3-populate
+# Source files and their labels
+D:/Sathishkumar_K/Qt/Development/TestMATE/TestMATE-claude-testmate-initial-setup/build/Desktop_Qt_6_8_2_MinGW_64_bit-Debug/_deps/sqlite3-subbuild/CMakeFiles/sqlite3-populate
+D:/Sathishkumar_K/Qt/Development/TestMATE/TestMATE-claude-testmate-initial-setup/build/Desktop_Qt_6_8_2_MinGW_64_bit-Debug/_deps/sqlite3-subbuild/CMakeFiles/sqlite3-populate.rule
+D:/Sathishkumar_K/Qt/Development/TestMATE/TestMATE-claude-testmate-initial-setup/build/Desktop_Qt_6_8_2_MinGW_64_bit-Debug/_deps/sqlite3-subbuild/CMakeFiles/sqlite3-populate-complete.rule
+D:/Sathishkumar_K/Qt/Development/TestMATE/TestMATE-claude-testmate-initial-setup/build/Desktop_Qt_6_8_2_MinGW_64_bit-Debug/_deps/sqlite3-subbuild/sqlite3-populate-prefix/src/sqlite3-populate-stamp/sqlite3-populate-build.rule
+D:/Sathishkumar_K/Qt/Development/TestMATE/TestMATE-claude-testmate-initial-setup/build/Desktop_Qt_6_8_2_MinGW_64_bit-Debug/_deps/sqlite3-subbuild/sqlite3-populate-prefix/src/sqlite3-populate-stamp/sqlite3-populate-configure.rule
+D:/Sathishkumar_K/Qt/Development/TestMATE/TestMATE-claude-testmate-initial-setup/build/Desktop_Qt_6_8_2_MinGW_64_bit-Debug/_deps/sqlite3-subbuild/sqlite3-populate-prefix/src/sqlite3-populate-stamp/sqlite3-populate-download.rule
+D:/Sathishkumar_K/Qt/Development/TestMATE/TestMATE-claude-testmate-initial-setup/build/Desktop_Qt_6_8_2_MinGW_64_bit-Debug/_deps/sqlite3-subbuild/sqlite3-populate-prefix/src/sqlite3-populate-stamp/sqlite3-populate-install.rule
+D:/Sathishkumar_K/Qt/Development/TestMATE/TestMATE-claude-testmate-initial-setup/build/Desktop_Qt_6_8_2_MinGW_64_bit-Debug/_deps/sqlite3-subbuild/sqlite3-populate-prefix/src/sqlite3-populate-stamp/sqlite3-populate-mkdir.rule
+D:/Sathishkumar_K/Qt/Development/TestMATE/TestMATE-claude-testmate-initial-setup/build/Desktop_Qt_6_8_2_MinGW_64_bit-Debug/_deps/sqlite3-subbuild/sqlite3-populate-prefix/src/sqlite3-populate-stamp/sqlite3-populate-patch.rule
+D:/Sathishkumar_K/Qt/Development/TestMATE/TestMATE-claude-testmate-initial-setup/build/Desktop_Qt_6_8_2_MinGW_64_bit-Debug/_deps/sqlite3-subbuild/sqlite3-populate-prefix/src/sqlite3-populate-stamp/sqlite3-populate-test.rule
+D:/Sathishkumar_K/Qt/Development/TestMATE/TestMATE-claude-testmate-initial-setup/build/Desktop_Qt_6_8_2_MinGW_64_bit-Debug/_deps/sqlite3-subbuild/sqlite3-populate-prefix/src/sqlite3-populate-stamp/sqlite3-populate-update.rule

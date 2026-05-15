@@ -1,0 +1,56 @@
+{
+	"configurations" : 
+	[
+		{
+			"directories" : 
+			[
+				{
+					"build" : ".",
+					"jsonFile" : "directory-.-Debug-d0094a50bb2071803777.json",
+					"projectIndex" : 0,
+					"source" : ".",
+					"targetIndexes" : 
+					[
+						0
+					]
+				}
+			],
+			"name" : "Debug",
+			"projects" : 
+			[
+				{
+					"directoryIndexes" : 
+					[
+						0
+					],
+					"name" : "Project",
+					"targetIndexes" : 
+					[
+						0
+					]
+				}
+			],
+			"targets" : 
+			[
+				{
+					"directoryIndex" : 0,
+					"id" : "testmate_core::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-testmate_core-Debug-ba0a8ae7af59a926383f.json",
+					"name" : "testmate_core",
+					"projectIndex" : 0
+				}
+			]
+		}
+	],
+	"kind" : "codemodel",
+	"paths" : 
+	{
+		"build" : "D:/Sathishkumar_K/Qt/Development/TestMATE/TestMATE-claude-continue-previous-work/src/core/build/Desktop_Qt_6_8_2_MinGW_64_bit-Debug",
+		"source" : "D:/Sathishkumar_K/Qt/Development/TestMATE/TestMATE-claude-continue-previous-work/src/core"
+	},
+	"version" : 
+	{
+		"major" : 2,
+		"minor" : 7
+	}
+}
