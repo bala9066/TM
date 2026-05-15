@@ -34,7 +34,9 @@ public:
     CResult UnregisterInstrument(const TString& in_strId);
     void UnregisterAll();
 
-    [[nodiscard]] IInstrument* GetInstrument(const TString& in_strId);
+    // Returns a shared owning pointer so the instrument cannot be freed by a
+    // concurrent UnregisterInstrument while the caller is still using it.
+    [[nodiscard]] TSharedPtr<IInstrument> GetInstrument(const TString& in_strId);
     [[nodiscard]] TVector<TString> GetInstrumentIds() const;
     [[nodiscard]] TVector<SInstrumentInfo> GetInstrumentList() const;
     [[nodiscard]] TUInt32 GetInstrumentCount() const;

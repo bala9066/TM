@@ -79,12 +79,12 @@ void CInstrumentManager::UnregisterAll() {
     m_mapInstruments.clear();
 }
 
-IInstrument* CInstrumentManager::GetInstrument(const TString& in_strId) {
+TSharedPtr<IInstrument> CInstrumentManager::GetInstrument(const TString& in_strId) {
     std::lock_guard<std::mutex> lock(m_mutex);
 
     auto it = m_mapInstruments.find(in_strId);
     if (it != m_mapInstruments.end()) {
-        return it->second.get();
+        return it->second;
     }
     return nullptr;
 }
@@ -118,7 +118,7 @@ TUInt32 CInstrumentManager::GetInstrumentCount() const {
 
 CResult CInstrumentManager::ConnectInstrument(const TString& in_strId,
                                                const SConnectionConfig& in_config) {
-    IInstrument* pInstrument = GetInstrument(in_strId);
+    TSharedPtr<IInstrument> pInstrument = GetInstrument(in_strId);
     if (!pInstrument) {
         return TESTMATE_FAILURE(EErrorCode::kNotFound,
                                 "Instrument not found: " + in_strId);
@@ -128,7 +128,7 @@ CResult CInstrumentManager::ConnectInstrument(const TString& in_strId,
 }
 
 CResult CInstrumentManager::DisconnectInstrument(const TString& in_strId) {
-    IInstrument* pInstrument = GetInstrument(in_strId);
+    TSharedPtr<IInstrument> pInstrument = GetInstrument(in_strId);
     if (!pInstrument) {
         return TESTMATE_FAILURE(EErrorCode::kNotFound,
                                 "Instrument not found: " + in_strId);

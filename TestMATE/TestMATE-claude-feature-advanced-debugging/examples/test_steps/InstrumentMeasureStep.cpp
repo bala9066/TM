@@ -115,7 +115,7 @@ CResult CInstrumentMeasureStep::Execute(SStepResult& out_result) {
     }
 
     // Get instrument from manager
-    IInstrument* pInstrument = GetInstrument();
+    auto pInstrument = GetInstrument();
     if (!pInstrument) {
         out_result.verdict = ETestVerdict::kError;
         out_result.message = "Instrument not found: " + m_strInstrumentId;
@@ -185,7 +185,7 @@ void CInstrumentMeasureStep::SetCommand(const TString& in_strCommand) {
     SetParameter("command", in_strCommand);
 }
 
-IInstrument* CInstrumentMeasureStep::GetInstrument() {
+TSharedPtr<IInstrument> CInstrumentMeasureStep::GetInstrument() {
     // Get instrument manager instance
     auto& instMgr = CInstrumentManager::GetInstance();
 

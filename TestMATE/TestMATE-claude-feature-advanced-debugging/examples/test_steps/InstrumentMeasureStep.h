@@ -86,7 +86,7 @@ private:
     TDouble m_measuredValue{0.0};
     TString m_strRawResponse;
 
-    IInstrument* GetInstrument();
+    TSharedPtr<IInstrument> GetInstrument();
     bool ParseNumericResponse(const TString& in_strResponse, TDouble& out_value);
 };
 

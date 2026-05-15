@@ -180,14 +180,14 @@ TEST_F(InstrumentManagerTest, GetInstrument_ReturnsRegistered) {
     auto pInst = std::make_shared<CSimulatedInstrument>("DMM1", EInstrumentType::kMultimeter);
     CInstrumentManager::GetInstance().RegisterInstrument(pInst);
 
-    IInstrument* pRetrieved = CInstrumentManager::GetInstance().GetInstrument("DMM1");
+    auto pRetrieved = CInstrumentManager::GetInstance().GetInstrument("DMM1");
 
     ASSERT_NE(pRetrieved, nullptr);
     EXPECT_EQ(pRetrieved->GetId(), "DMM1");
 }
 
 TEST_F(InstrumentManagerTest, GetInstrument_Unknown_ReturnsNull) {
-    IInstrument* pInst = CInstrumentManager::GetInstance().GetInstrument("UNKNOWN");
+    auto pInst = CInstrumentManager::GetInstance().GetInstrument("UNKNOWN");
     EXPECT_EQ(pInst, nullptr);
 }
 
