@@ -88,8 +88,16 @@ public:
     // Results
     //=========================================================================
 
-    [[nodiscard]] const STestReport& GetReport() const { return m_report; }
-    [[nodiscard]] const TVector<STestResult>& GetResults() const { return m_vecResults; }
+    // Return by value under the lock: the execution thread mutates these
+    // members concurrently, so handing out a reference would be a race.
+    [[nodiscard]] STestReport GetReport() const {
+        std::lock_guard<std::mutex> lock(m_mutex);
+        return m_report;
+    }
+    [[nodiscard]] TVector<STestResult> GetResults() const {
+        std::lock_guard<std::mutex> lock(m_mutex);
+        return m_vecResults;
+    }
 
     //=========================================================================
     // Callbacks

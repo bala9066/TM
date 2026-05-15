@@ -185,7 +185,7 @@ public:
 
 private:
     void JobDispatcherFunc();
-    void ExecuteJob(SBatchJob& io_job);
+    void ExecuteJob(TUInt64 in_jobId);
     SBatchJob* GetNextJob();
 
     TUInt32 m_uiConcurrency;

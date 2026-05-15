@@ -253,17 +253,25 @@ void CParallelModel::SyncBarrier() {
 
     std::unique_lock<std::mutex> lock(m_syncMutex);
 
+    // Capture the generation we arrived in. A correct barrier must release
+    // threads by generation: keying the wait on "count == 0" is broken
+    // because a fast thread re-entering the next cycle increments the count
+    // again and the still-waiting threads never see zero.
+    TUInt32 myGeneration = m_uiSyncGeneration;
     ++m_uiSyncCount;
 
     if (m_uiSyncCount.load() >= enabledCount) {
-        // Last thread to arrive - release all
+        // Last thread to arrive: open the barrier and start a new generation.
         m_uiSyncCount = 0;
+        ++m_uiSyncGeneration;
         m_syncCV.notify_all();
     } else {
-        // Wait for others
-        m_syncCV.wait(lock, [this, enabledCount]() {
-            return m_uiSyncCount.load() == 0 ||
-                   m_mapContexts.begin()->second.IsAbortRequested();
+        // Wait until the barrier opens (generation advances) or an abort is
+        // requested.
+        m_syncCV.wait(lock, [this, myGeneration]() {
+            return m_uiSyncGeneration != myGeneration ||
+                   (!m_mapContexts.empty() &&
+                    m_mapContexts.begin()->second.IsAbortRequested());
         });
     }
 }

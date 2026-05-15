@@ -168,6 +168,10 @@ private:
     std::mutex m_syncMutex;
     std::condition_variable m_syncCV;
     std::atomic<TUInt32> m_uiSyncCount{0};
+    // Barrier generation counter — incremented each time the barrier opens
+    // so a fast thread re-entering the next cycle cannot be mistaken for a
+    // still-waiting thread. Guarded by m_syncMutex.
+    TUInt32 m_uiSyncGeneration{0};
     std::atomic<TUInt32> m_uiCompletedSockets{0};
 };
 

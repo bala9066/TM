@@ -200,13 +200,10 @@ void CBatchModel::JobDispatcherFunc() {
         if (pJob) {
             TUInt64 jobId = pJob->jobId;
 
-            // Submit job to thread pool
+            // Submit job to thread pool. ExecuteJob takes the lock only for
+            // bookkeeping — the job body itself runs unlocked.
             m_pThreadPool->Submit([this, jobId]() {
-                std::lock_guard<std::mutex> lock(m_jobMutex);
-                auto it = m_mapJobs.find(jobId);
-                if (it != m_mapJobs.end()) {
-                    ExecuteJob(it->second);
-                }
+                ExecuteJob(jobId);
             });
         }
     }
@@ -232,40 +229,53 @@ SBatchJob* CBatchModel::GetNextJob() {
     return nullptr;
 }
 
-void CBatchModel::ExecuteJob(SBatchJob& io_job) {
-    // Placeholder for actual test execution
-    // In real implementation, would load and run test sequence
+void CBatchModel::ExecuteJob(TUInt64 in_jobId) {
+    // Validate the job still exists.
+    {
+        std::lock_guard<std::mutex> lock(m_jobMutex);
+        if (m_mapJobs.find(in_jobId) == m_mapJobs.end()) {
+            return;
+        }
+    }
 
-    CLogManager::GetInstance().LogInfo("BatchModel",
-        "Executing job {}: {}", io_job.jobId, io_job.name);
+    CLogManager::GetInstance().LogInfo("BatchModel", "Executing job {}", in_jobId);
 
-    // Simulate work
+    // Placeholder for actual test execution. CRITICAL: this work runs
+    // WITHOUT m_jobMutex held — otherwise every "parallel" job serializes
+    // on the lock and effective concurrency collapses to one.
     std::this_thread::sleep_for(std::chrono::milliseconds(100));
 
-    // Simulate results
-    io_job.passCount = 10;
-    io_job.failCount = 0;
-    io_job.verdict = ETestVerdict::kPass;
-    io_job.state = EExecutionState::kCompleted;
-    io_job.endTime = std::chrono::steady_clock::now();
+    // Take the lock only to record results and update tracking sets.
+    {
+        std::lock_guard<std::mutex> lock(m_jobMutex);
 
-    // Update tracking (already have lock from caller)
-    m_setRunning.erase(io_job.jobId);
-    m_setCompleted.insert(io_job.jobId);
+        auto it = m_mapJobs.find(in_jobId);
+        if (it == m_mapJobs.end()) {
+            return;
+        }
+        SBatchJob& job = it->second;
 
-    // Check for first failure stop
-    if (m_bStopOnFirstFailure && io_job.verdict == ETestVerdict::kFail) {
-        m_bShouldStop = true;
-        m_jobCV.notify_all();
+        job.passCount = 10;
+        job.failCount = 0;
+        job.verdict = ETestVerdict::kPass;
+        job.state = EExecutionState::kCompleted;
+        job.endTime = std::chrono::steady_clock::now();
+
+        m_setRunning.erase(in_jobId);
+        m_setCompleted.insert(in_jobId);
+
+        if (m_bStopOnFirstFailure && job.verdict == ETestVerdict::kFail) {
+            m_bShouldStop = true;
+        }
+
+        // Check if all jobs complete
+        if (m_queuePending.empty() && m_setRunning.empty()) {
+            SetState(EProcessModelState::kCompleted);
+        }
     }
 
-    // Notify completion
+    // Notify dispatcher/waiters after releasing the lock.
     m_jobCV.notify_all();
-
-    // Check if all jobs complete
-    if (m_queuePending.empty() && m_setRunning.empty()) {
-        SetState(EProcessModelState::kCompleted);
-    }
 }
 
 bool CBatchModel::WaitForCompletion(TInt64 in_timeoutMs) {

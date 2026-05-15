@@ -231,13 +231,26 @@ TString CXmlSequenceParser::EscapeXml(const TString& in_str) {
 }
 
 TString CXmlSequenceParser::UnescapeXml(const TString& in_str) {
-    TString result = in_str;
-    size_t pos;
-    while ((pos = result.find("&amp;")) != TString::npos) result.replace(pos, 5, "&");
-    while ((pos = result.find("&lt;")) != TString::npos) result.replace(pos, 4, "<");
-    while ((pos = result.find("&gt;")) != TString::npos) result.replace(pos, 4, ">");
-    while ((pos = result.find("&quot;")) != TString::npos) result.replace(pos, 6, "\"");
-    while ((pos = result.find("&apos;")) != TString::npos) result.replace(pos, 6, "'");
+    // Single left-to-right pass: each entity is consumed exactly once.
+    // The previous repeated-replace approach unescaped "&amp;" first, so
+    // escaped literal text such as "&amp;lt;" was wrongly turned into "<"
+    // (double unescape). std::string::compare clamps its length argument,
+    // so the lookups are bounds-safe even near the end of the string.
+    TString result;
+    result.reserve(in_str.size());
+
+    for (size_t i = 0; i < in_str.size(); ) {
+        if (in_str[i] == '&') {
+            if (in_str.compare(i, 5, "&amp;") == 0)  { result += '&';  i += 5; continue; }
+            if (in_str.compare(i, 4, "&lt;") == 0)   { result += '<';  i += 4; continue; }
+            if (in_str.compare(i, 4, "&gt;") == 0)   { result += '>';  i += 4; continue; }
+            if (in_str.compare(i, 6, "&quot;") == 0) { result += '"';  i += 6; continue; }
+            if (in_str.compare(i, 6, "&apos;") == 0) { result += '\''; i += 6; continue; }
+        }
+        result += in_str[i];
+        ++i;
+    }
+
     return result;
 }
 

@@ -28,23 +28,24 @@ CResult CTestExecutor::Execute(CTestSequence& io_sequence, const SExecutionConfi
     m_config = in_config;
     m_bAbortRequested = false;
     m_bPauseRequested = false;
-    m_vecResults.clear();
     m_startTime = std::chrono::steady_clock::now();
 
-    // Initialize status
-    m_status.state = EExecutionState::kRunning;
-    m_status.currentStepIndex = 0;
-    m_status.totalSteps = io_sequence.GetStepCount();
-    m_status.passCount = 0;
-    m_status.failCount = 0;
-    m_status.skipCount = 0;
-    m_status.progress = 0.0;
+    // Initialize status and report under the lock: GetStatus()/GetReport()/
+    // GetResults() read these members concurrently from other threads.
+    {
+        std::lock_guard<std::mutex> lock(m_mutex);
 
-    // Initialize report
-    m_report = STestReport();
-    m_report.sequenceName = io_sequence.GetName();
-    m_report.startTime = m_startTime;
-    m_report.totalSteps = m_status.totalSteps;
+        m_vecResults.clear();
+
+        m_status = SExecutionStatus();
+        m_status.state = EExecutionState::kRunning;
+        m_status.totalSteps = io_sequence.GetStepCount();
+
+        m_report = STestReport();
+        m_report.sequenceName = io_sequence.GetName();
+        m_report.startTime = m_startTime;
+        m_report.totalSteps = m_status.totalSteps;
+    }
 
     m_eState = EExecutionState::kRunning;
 
@@ -63,6 +64,10 @@ CResult CTestExecutor::Execute(CTestSequence& io_sequence, const SExecutionConfi
     FinalizeReport(success);
 
     m_eState = m_bAbortRequested ? EExecutionState::kAborted : EExecutionState::kCompleted;
+    {
+        std::lock_guard<std::mutex> lock(m_mutex);
+        m_status.state = m_eState.load();
+    }
 
     if (m_executionCompleteCallback) {
         m_executionCompleteCallback(success, m_report);
@@ -96,8 +101,11 @@ CResult CTestExecutor::ExecuteSequential(CTestSequence& io_sequence) {
             skipResult.verdict = ETestVerdict::kSkipped;
             skipResult.message = "Step disabled";
 
-            m_vecResults.push_back(skipResult);
-            m_status.skipCount++;
+            {
+                std::lock_guard<std::mutex> lock(m_mutex);
+                m_vecResults.push_back(skipResult);
+                m_status.skipCount++;
+            }
             continue;
         }
 
@@ -114,8 +122,11 @@ CResult CTestExecutor::ExecuteSequential(CTestSequence& io_sequence) {
 }
 
 CResult CTestExecutor::ExecuteStep(ITestStep* io_pStep, TUInt32 in_uiIndex) {
-    m_status.currentStepIndex = in_uiIndex;
-    m_status.currentStepName = io_pStep->GetName();
+    {
+        std::lock_guard<std::mutex> lock(m_mutex);
+        m_status.currentStepIndex = in_uiIndex;
+        m_status.currentStepName = io_pStep->GetName();
+    }
 
     NotifyStepStart(in_uiIndex, io_pStep->GetName());
 
@@ -160,21 +171,24 @@ CResult CTestExecutor::ExecuteStep(ITestStep* io_pStep, TUInt32 in_uiIndex) {
     result.durationMs = stepResult.durationMs;
     result.measurements = stepResult.measurements;
 
-    m_vecResults.push_back(result);
+    {
+        std::lock_guard<std::mutex> lock(m_mutex);
+        m_vecResults.push_back(result);
 
-    switch (result.verdict) {
-        case ETestVerdict::kPass:
-            m_status.passCount++;
-            break;
-        case ETestVerdict::kFail:
-        case ETestVerdict::kError:
-            m_status.failCount++;
-            break;
-        case ETestVerdict::kSkipped:
-            m_status.skipCount++;
-            break;
-        default:
-            break;
+        switch (result.verdict) {
+            case ETestVerdict::kPass:
+                m_status.passCount++;
+                break;
+            case ETestVerdict::kFail:
+            case ETestVerdict::kError:
+                m_status.failCount++;
+                break;
+            case ETestVerdict::kSkipped:
+                m_status.skipCount++;
+                break;
+            default:
+                break;
+        }
     }
 
     NotifyStepComplete(in_uiIndex, result);
@@ -227,15 +241,21 @@ bool CTestExecutor::IsPaused() const {
 }
 
 void CTestExecutor::UpdateProgress() {
-    if (m_status.totalSteps > 0) {
-        m_status.progress = static_cast<TDouble>(m_status.currentStepIndex + 1) / m_status.totalSteps;
+    TDouble progress;
+    TString stepName;
+    {
+        std::lock_guard<std::mutex> lock(m_mutex);
+        if (m_status.totalSteps > 0) {
+            m_status.progress = static_cast<TDouble>(m_status.currentStepIndex + 1) / m_status.totalSteps;
+        }
+        auto now = std::chrono::steady_clock::now();
+        m_status.elapsedMs = std::chrono::duration_cast<std::chrono::milliseconds>(
+            now - m_startTime).count();
+        progress = m_status.progress;
+        stepName = m_status.currentStepName;
     }
 
-    auto now = std::chrono::steady_clock::now();
-    m_status.elapsedMs = std::chrono::duration_cast<std::chrono::milliseconds>(
-        now - m_startTime).count();
-
-    NotifyProgress(m_status.progress, m_status.currentStepName);
+    NotifyProgress(progress, stepName);
 }
 
 void CTestExecutor::NotifyStepStart(TUInt32 in_uiIndex, const TString& in_strName) {
@@ -257,6 +277,8 @@ void CTestExecutor::NotifyProgress(TDouble in_fProgress, const TString& in_strMe
 }
 
 void CTestExecutor::FinalizeReport(bool in_bSuccess) {
+    std::lock_guard<std::mutex> lock(m_mutex);
+
     m_report.endTime = std::chrono::steady_clock::now();
     m_report.totalDurationMs = std::chrono::duration_cast<std::chrono::milliseconds>(
         m_report.endTime - m_report.startTime).count();
