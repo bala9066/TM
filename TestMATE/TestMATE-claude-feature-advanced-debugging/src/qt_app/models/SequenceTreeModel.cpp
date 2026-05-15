@@ -3,6 +3,25 @@
 #include "core/test_sequence/ITestStep.h"
 #include <QDebug>
 
+namespace {
+QString stepTypeToString(TestMATE::EStepType type)
+{
+    switch (type) {
+        case TestMATE::EStepType::kAction:      return QStringLiteral("Action");
+        case TestMATE::EStepType::kValidation:  return QStringLiteral("Validation");
+        case TestMATE::EStepType::kMeasurement: return QStringLiteral("Measurement");
+        case TestMATE::EStepType::kSequence:    return QStringLiteral("Sequence");
+        case TestMATE::EStepType::kConditional: return QStringLiteral("Conditional");
+        case TestMATE::EStepType::kLoop:        return QStringLiteral("Loop");
+        case TestMATE::EStepType::kCall:        return QStringLiteral("Call");
+        case TestMATE::EStepType::kWait:        return QStringLiteral("Wait");
+        case TestMATE::EStepType::kSync:        return QStringLiteral("Sync");
+        case TestMATE::EStepType::kCustom:      return QStringLiteral("Custom");
+    }
+    return QStringLiteral("Unknown");
+}
+} // namespace
+
 SequenceTreeModel::SequenceTreeModel(TestMATE::CTestSequence *sequence, QObject *parent)
     : QAbstractItemModel(parent), m_pSequence(sequence)
 {
@@ -54,13 +73,19 @@ QVariant SequenceTreeModel::data(const QModelIndex &index, int role) const
     if (!index.isValid() || !m_pSequence)
         return QVariant();
 
+    TestMATE::ITestStep *step = getStep(index);
+    if (!step)
+        return QVariant();
+
     if (role == Qt::DisplayRole) {
-        if (index.column() == 0)
-            return QString("Step %1").arg(index.row() + 1);
-        else if (index.column() == 1)
-            return QString("Test");
-        else if (index.column() == 2)
-            return QString("Ready");
+        switch (index.column()) {
+            case 0: return QString::fromStdString(step->GetName());
+            case 1: return stepTypeToString(step->GetType());
+            case 2: return step->IsEnabled() ? QStringLiteral("Enabled")
+                                             : QStringLiteral("Disabled");
+        }
+    } else if (role == Qt::ToolTipRole && index.column() == 0) {
+        return QString::fromStdString(step->GetDescription());
     }
 
     return QVariant();
@@ -264,24 +289,22 @@ bool SequenceTreeModel::moveStep(int fromRow, int toRow)
     if (fromRow == toRow)
         return true;  // No-op
 
-    const auto& steps = m_pSequence->GetSteps();
-    if (fromRow < 0 || fromRow >= static_cast<int>(steps.size()))
+    const int count = rowCount();
+    if (fromRow < 0 || fromRow >= count)
+        return false;
+    if (toRow < 0 || toRow >= count)
         return false;
 
-    if (toRow < 0 || toRow > static_cast<int>(steps.size()))
+    // A full reset is used (rather than beginMoveRows) because it is
+    // unconditionally correct; the cost is losing selection/expansion.
+    beginResetModel();
+    auto result = m_pSequence->MoveStep(static_cast<TestMATE::TUInt32>(fromRow),
+                                        static_cast<TestMATE::TUInt32>(toRow));
+    endResetModel();
+
+    if (result.IsFailure())
         return false;
 
-    // TODO: Actually reorder steps in sequence
-    // This requires adding a MoveStep() method to CTestSequence
-    // For now, just log the operation
-
-    qDebug() << "Would move step from row:" << fromRow << "to row:" << toRow;
-
-    // Signal that we moved a step
     emit stepMoved(fromRow, toRow);
-
-    // Refresh model (in real implementation, use beginMoveRows/endMoveRows)
-    refresh();
-
     return true;
 }

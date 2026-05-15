@@ -4,13 +4,16 @@
 
 #include "ExecutionMonitorWidget.h"
 #include "ui_ExecutionMonitorWidget.h"
+#include "models/ResultsTableModel.h"
 
 ExecutionMonitorWidget::ExecutionMonitorWidget(QWidget *parent)
     : QWidget(parent)
     , ui(new Ui::ExecutionMonitorWidget)
+    , m_pResultsModel(new ResultsTableModel(this))
     , m_bRunning(false)
 {
     ui->setupUi(this);
+    ui->resultsTable->setModel(m_pResultsModel);
 }
 
 ExecutionMonitorWidget::~ExecutionMonitorWidget()
@@ -21,6 +24,7 @@ ExecutionMonitorWidget::~ExecutionMonitorWidget()
 void ExecutionMonitorWidget::startExecution(bool debugMode)
 {
     m_bRunning = true;
+    m_pResultsModel->clearResults();
     ui->statusLabel->setText(debugMode ? tr("Debug Mode Running") : tr("Running"));
     ui->pauseButton->setEnabled(true);
     ui->stopButton->setEnabled(true);
@@ -51,7 +55,15 @@ void ExecutionMonitorWidget::abortExecution()
     emit executionCompleted(false);
 }
 
-void ExecutionMonitorWidget::updateProgress(double progress)
+void ExecutionMonitorWidget::addStepResult(const QString &stepName,
+                                           const QString &verdict,
+                                           const QString &detail)
+{
+    m_pResultsModel->addResult(stepName, verdict, detail);
+    emit stepCompleted(stepName, verdict);
+}
+
+void ExecutionMonitorWidget::setProgress(double progress)
 {
     ui->progressBar->setValue(static_cast<int>(progress * 100));
 }

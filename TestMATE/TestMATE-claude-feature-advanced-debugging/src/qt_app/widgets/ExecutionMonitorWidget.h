@@ -13,6 +13,8 @@ namespace Ui {
 class ExecutionMonitorWidget;
 }
 
+class ResultsTableModel;
+
 class ExecutionMonitorWidget : public QWidget
 {
     Q_OBJECT
@@ -26,15 +28,20 @@ public:
     void stopExecution();
     void abortExecution();
 
+    /// Append a finished step to the results table and emit stepCompleted.
+    void addStepResult(const QString &stepName, const QString &verdict,
+                       const QString &detail = QString());
+
+    /// Update the progress bar (0.0 - 1.0).
+    void setProgress(double progress);
+
 signals:
     void executionStarted();
     void executionCompleted(bool success);
     void stepCompleted(const QString& stepName, const QString& result);
 
 private:
-    void updateProgress(double progress);
-
-private:
     Ui::ExecutionMonitorWidget *ui;
+    ResultsTableModel *m_pResultsModel;
     bool m_bRunning;
 };
