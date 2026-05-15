@@ -64,6 +64,45 @@ struct SHttpRequest {
 };
 
 /**
+ * @brief JSON string escaping (declared early so SHttpResponse can use it)
+ */
+namespace JsonHelper {
+    /**
+     * @brief Escape a string for safe embedding inside a JSON string literal.
+     *        Escapes quotes, backslashes and all control characters (< 0x20).
+     */
+    inline TString EscapeJson(const TString& in_str) {
+        static const char hexDigits[] = "0123456789abcdef";
+        TString result;
+        result.reserve(in_str.size());
+
+        for (char c : in_str) {
+            unsigned char uc = static_cast<unsigned char>(c);
+            switch (c) {
+                case '"':  result += "\\\""; break;
+                case '\\': result += "\\\\"; break;
+                case '\b': result += "\\b";  break;
+                case '\f': result += "\\f";  break;
+                case '\n': result += "\\n";  break;
+                case '\r': result += "\\r";  break;
+                case '\t': result += "\\t";  break;
+                default:
+                    if (uc < 0x20) {
+                        result += "\\u00";
+                        result += hexDigits[(uc >> 4) & 0xF];
+                        result += hexDigits[uc & 0xF];
+                    } else {
+                        result += c;
+                    }
+                    break;
+            }
+        }
+
+        return result;
+    }
+}
+
+/**
  * @brief HTTP response
  */
 struct SHttpResponse {
@@ -84,7 +123,9 @@ struct SHttpResponse {
 
     void SetError(EHttpStatus in_status, const TString& in_message) {
         status = in_status;
-        SetJson("{\"error\": \"" + in_message + "\"}");
+        // Escape the message: it often contains attacker-influenced data
+        // (ids, parsed fields) that would otherwise break out of the JSON.
+        SetJson("{\"error\": \"" + JsonHelper::EscapeJson(in_message) + "\"}");
     }
 };
 
@@ -121,7 +162,8 @@ struct SAuthCredentials {
  * @brief API server configuration
  */
 struct SApiServerConfig {
-    TString host{"0.0.0.0"};
+    TString host{"127.0.0.1"};  // Secure default: loopback only. Set to
+                                // "0.0.0.0" explicitly to expose externally.
     TUInt16 port{8080};
     TUInt32 threadPoolSize{4};
     bool enableAuth{true};
@@ -348,9 +390,17 @@ private:
     mutable std::mutex m_mutex;
     TMap<TString, TMap<TString, FRouteHandler>> m_routes;  // [method][path] -> handler
     TMap<TString, FWebSocketHandler> m_webSocketHandlers;
-    TMap<TString, TString> m_users;  // username -> hashed password
+    TMap<TString, TString> m_users;  // username -> "salt:hash"
     TMap<TString, SAuthCredentials> m_tokens;  // token -> credentials
     TMap<TString, STestExecutionInfo> m_executions;  // executionId -> info
+
+    // Brute-force protection: per-username failed-attempt count and the
+    // time until which further login attempts are rejected.
+    struct SLoginThrottle {
+        TUInt32 failedAttempts{0};
+        TTimePoint lockoutUntil{};
+    };
+    TMap<TString, SLoginThrottle> m_loginThrottle;
 
     // Statistics
     std::atomic<TUInt64> m_totalRequests{0};
@@ -361,34 +411,9 @@ private:
 };
 
 /**
- * @brief JSON helper functions
+ * @brief JSON helper functions (EscapeJson is defined earlier in this header)
  */
 namespace JsonHelper {
-    /**
-     * @brief Escape JSON string
-     * @param in_str String to escape
-     * @return Escaped string
-     */
-    inline TString EscapeJson(const TString& in_str) {
-        TString result;
-        result.reserve(in_str.size());
-
-        for (char c : in_str) {
-            switch (c) {
-                case '"':  result += "\\\""; break;
-                case '\\': result += "\\\\"; break;
-                case '\b': result += "\\b";  break;
-                case '\f': result += "\\f";  break;
-                case '\n': result += "\\n";  break;
-                case '\r': result += "\\r";  break;
-                case '\t': result += "\\t";  break;
-                default:   result += c;      break;
-            }
-        }
-
-        return result;
-    }
-
     /**
      * @brief Convert execution status to JSON
      * @param in_info Execution info
