@@ -268,6 +268,22 @@ private:
     bool AreDependenciesSatisfied(const STestJob& in_job) const;
 
     /**
+     * @brief Check (without acquiring) whether a job's resources are free
+     * @param in_job Job to check
+     * @return true if every required resource has spare capacity
+     */
+    bool AreResourcesAvailable(const STestJob& in_job) const;
+
+    /**
+     * @brief Check whether any queued job is currently runnable (not
+     *        completed, not active, dependencies satisfied, resources free).
+     *        Used as the worker condition-variable predicate so idle workers
+     *        block instead of busy-spinning on a permanently-true predicate.
+     * @return true if at least one job could be started now
+     */
+    bool HasRunnableJob() const;
+
+    /**
      * @brief Acquire resources for job
      * @param in_job Job requiring resources
      * @return true if resources acquired

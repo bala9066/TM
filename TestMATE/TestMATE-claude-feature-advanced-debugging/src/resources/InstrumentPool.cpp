@@ -540,8 +540,11 @@ void CInstrumentPool::CheckExpiredReservations() {
     auto now = std::chrono::steady_clock::now();
 
     for (auto& [id, info] : m_instrumentInfo) {
-        if ((info.state == EPoolInstrumentState::kReserved ||
-             info.state == EPoolInstrumentState::kInUse) &&
+        // Only auto-release instruments that are reserved but not yet
+        // actively in use. A kInUse instrument is being driven by a running
+        // test; force-releasing it would hand the same physical hardware to
+        // a second test concurrently — a real safety hazard for a tester.
+        if (info.state == EPoolInstrumentState::kReserved &&
             now > info.reservedUntil) {
 
             // Auto-release expired reservation

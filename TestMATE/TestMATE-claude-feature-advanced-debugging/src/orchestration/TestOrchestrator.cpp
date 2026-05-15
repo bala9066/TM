@@ -98,27 +98,34 @@ CResult CTestOrchestrator::SubmitJob(const STestJob& in_job) {
 }
 
 CResult CTestOrchestrator::CancelJob(const TString& in_jobId) {
-    std::lock_guard<std::mutex> lock(m_mutex);
+    STestJob jobSnapshot;
+    {
+        std::lock_guard<std::mutex> lock(m_mutex);
 
-    auto it = m_jobs.find(in_jobId);
-    if (it == m_jobs.end()) {
-        return TESTMATE_FAILURE(EErrorCode::kNotFound, "Job not found");
+        auto it = m_jobs.find(in_jobId);
+        if (it == m_jobs.end()) {
+            return TESTMATE_FAILURE(EErrorCode::kNotFound, "Job not found");
+        }
+
+        if (it->second.isCompleted) {
+            return TESTMATE_FAILURE(EErrorCode::kInvalidState, "Job already completed");
+        }
+
+        // Mark as failed/cancelled
+        it->second.isCompleted = true;
+        it->second.isSuccessful = false;
+        it->second.errorMessage = "Job cancelled by user";
+        it->second.endTime = std::chrono::steady_clock::now();
+
+        m_failedJobs++;
+        m_completedJobs.insert(in_jobId);
+        jobSnapshot = it->second;
     }
 
-    if (it->second.isCompleted) {
-        return TESTMATE_FAILURE(EErrorCode::kInvalidState, "Job already completed");
-    }
-
-    // Mark as failed/cancelled
-    it->second.isCompleted = true;
-    it->second.isSuccessful = false;
-    it->second.errorMessage = "Job cancelled by user";
-    it->second.endTime = std::chrono::steady_clock::now();
-
-    m_failedJobs++;
-    m_completedJobs.insert(in_jobId);
-
-    NotifyJobStatus(it->second);
+    // Notify outside the lock: the callback may re-enter the orchestrator.
+    NotifyJobStatus(jobSnapshot);
+    // Wake workers so dependents can re-evaluate.
+    m_cv.notify_all();
 
     return TESTMATE_SUCCESS();
 }
@@ -263,9 +270,12 @@ void CTestOrchestrator::WorkerThread() {
         {
             std::unique_lock<std::mutex> lock(m_mutex);
 
-            // Wait for work or shutdown
+            // Wait for runnable work or shutdown. The predicate must test
+            // for an actually-runnable job: m_jobs is never emptied, so
+            // "!m_jobs.empty()" would be permanently true and every worker
+            // would busy-spin at 100% CPU once any job finished.
             m_cv.wait(lock, [this]() {
-                return !m_isRunning || !m_jobs.empty();
+                return !m_isRunning || HasRunnableJob();
             });
 
             if (!m_isRunning) {
@@ -345,17 +355,39 @@ bool CTestOrchestrator::AreDependenciesSatisfied(const STestJob& in_job) const {
     return true;
 }
 
-bool CTestOrchestrator::AcquireResources(const STestJob& in_job) {
-    // Check if all resources are available
+bool CTestOrchestrator::AreResourcesAvailable(const STestJob& in_job) const {
     for (const auto& resourceId : in_job.resources) {
         auto it = m_resources.find(resourceId);
         if (it == m_resources.end()) {
             return false;  // Resource not registered
         }
-
         if (it->second.currentUsage >= it->second.maxConcurrent) {
             return false;  // Resource at capacity
         }
+    }
+    return true;
+}
+
+bool CTestOrchestrator::HasRunnableJob() const {
+    for (const auto& [id, job] : m_jobs) {
+        if (job.isCompleted || m_activeJobs.count(id) > 0) {
+            continue;
+        }
+        if (m_config.enableDependencyTracking && !AreDependenciesSatisfied(job)) {
+            continue;
+        }
+        if (m_config.enableResourceManagement && !AreResourcesAvailable(job)) {
+            continue;
+        }
+        return true;
+    }
+    return false;
+}
+
+bool CTestOrchestrator::AcquireResources(const STestJob& in_job) {
+    // Check if all resources are available
+    if (!AreResourcesAvailable(in_job)) {
+        return false;
     }
 
     // Acquire all resources
@@ -388,6 +420,7 @@ void CTestOrchestrator::ExecuteJob(STestJob& in_job) {
     std::this_thread::sleep_for(std::chrono::milliseconds(100));
 
     // Complete job
+    STestJob jobSnapshot;
     {
         std::lock_guard<std::mutex> lock(m_mutex);
         auto& job = m_jobs[in_job.jobId];
@@ -401,10 +434,12 @@ void CTestOrchestrator::ExecuteJob(STestJob& in_job) {
 
         // Release resources
         ReleaseJobResources(job);
-
-        // Notify
-        NotifyJobStatus(job);
+        jobSnapshot = job;
     }
+
+    // Notify outside the lock: the callback may re-enter the orchestrator,
+    // which would self-deadlock on the non-recursive mutex.
+    NotifyJobStatus(jobSnapshot);
 
     // Wake up other workers in case they were waiting for this job's completion
     m_cv.notify_all();

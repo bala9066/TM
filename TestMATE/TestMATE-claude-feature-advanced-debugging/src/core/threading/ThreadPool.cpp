@@ -131,9 +131,13 @@ void CThreadPool::WorkerThread() {
             LOG_ERROR(kLogSource, "Task threw unknown exception");
         }
 
-        --m_uiActiveTasks;
-
-        // Notify waiters
+        // Decrement the active count under the mutex so WaitForAll cannot
+        // evaluate its predicate between the decrement and the notify and
+        // then sleep forever (lost wakeup).
+        {
+            std::lock_guard<std::mutex> lock(m_mutex);
+            --m_uiActiveTasks;
+        }
         m_cvComplete.notify_all();
     }
 
