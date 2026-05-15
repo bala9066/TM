@@ -124,29 +124,32 @@ public:
     /**
      * @brief Get a breakpoint by ID
      * @param in_id Breakpoint ID
-     * @return Pointer to breakpoint or nullptr if not found
+     * @return Shared owning pointer to the breakpoint, or nullptr if not found.
+     *         A shared_ptr is returned (rather than a raw pointer) so the
+     *         breakpoint cannot be freed by a concurrent RemoveBreakpoint /
+     *         ClearAllBreakpoints while the caller still holds it.
      */
-    [[nodiscard]] CBreakpoint* GetBreakpoint(TUInt32 in_id);
+    [[nodiscard]] std::shared_ptr<CBreakpoint> GetBreakpoint(TUInt32 in_id);
 
     /**
      * @brief Get a breakpoint by ID (const version)
      * @param in_id Breakpoint ID
-     * @return Const pointer to breakpoint or nullptr if not found
+     * @return Shared owning pointer to the const breakpoint, or nullptr.
      */
-    [[nodiscard]] const CBreakpoint* GetBreakpoint(TUInt32 in_id) const;
+    [[nodiscard]] std::shared_ptr<const CBreakpoint> GetBreakpoint(TUInt32 in_id) const;
 
     /**
      * @brief Get all breakpoints at a specific location
      * @param in_location Location (step ID)
-     * @return Vector of breakpoint pointers
+     * @return Vector of shared owning breakpoint pointers
      */
-    [[nodiscard]] TVector<CBreakpoint*> GetBreakpointsAt(const TString& in_location);
+    [[nodiscard]] TVector<std::shared_ptr<CBreakpoint>> GetBreakpointsAt(const TString& in_location);
 
     /**
      * @brief Get all breakpoints
-     * @return Vector of all breakpoint pointers
+     * @return Vector of all shared owning breakpoint pointers
      */
-    [[nodiscard]] TVector<CBreakpoint*> GetAllBreakpoints();
+    [[nodiscard]] TVector<std::shared_ptr<CBreakpoint>> GetAllBreakpoints();
 
     /**
      * @brief Get breakpoint count
@@ -275,7 +278,7 @@ private:
     SBreakpointManagerConfig m_config;
 
     // Breakpoint storage
-    TMap<TUInt32, std::unique_ptr<CBreakpoint>> m_breakpoints;  ///< All breakpoints by ID
+    TMap<TUInt32, std::shared_ptr<CBreakpoint>> m_breakpoints;  ///< All breakpoints by ID
     TUInt32 m_nextId{1};                                         ///< Next breakpoint ID to assign
 
     // Thread safety

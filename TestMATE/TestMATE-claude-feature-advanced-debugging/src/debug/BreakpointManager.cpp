@@ -47,7 +47,7 @@ TUInt32 CBreakpointManager::AddBreakpoint(EBreakpointType in_type, const TString
 
     // Create new breakpoint
     TUInt32 newId = m_nextId++;
-    auto breakpoint = std::make_unique<CBreakpoint>(newId, in_type);
+    auto breakpoint = std::make_shared<CBreakpoint>(newId, in_type);
     breakpoint->SetLocation(in_location);
 
     // Store the breakpoint
@@ -106,45 +106,45 @@ void CBreakpointManager::ClearAllBreakpoints() {
 
 // ==================== Breakpoint Access ====================
 
-CBreakpoint* CBreakpointManager::GetBreakpoint(TUInt32 in_id) {
+std::shared_ptr<CBreakpoint> CBreakpointManager::GetBreakpoint(TUInt32 in_id) {
     std::lock_guard<std::mutex> lock(m_mutex);
 
     auto it = m_breakpoints.find(in_id);
     if (it != m_breakpoints.end()) {
-        return it->second.get();
+        return it->second;
     }
     return nullptr;
 }
 
-const CBreakpoint* CBreakpointManager::GetBreakpoint(TUInt32 in_id) const {
+std::shared_ptr<const CBreakpoint> CBreakpointManager::GetBreakpoint(TUInt32 in_id) const {
     std::lock_guard<std::mutex> lock(m_mutex);
 
     auto it = m_breakpoints.find(in_id);
     if (it != m_breakpoints.end()) {
-        return it->second.get();
+        return it->second;
     }
     return nullptr;
 }
 
-TVector<CBreakpoint*> CBreakpointManager::GetBreakpointsAt(const TString& in_location) {
+TVector<std::shared_ptr<CBreakpoint>> CBreakpointManager::GetBreakpointsAt(const TString& in_location) {
     std::lock_guard<std::mutex> lock(m_mutex);
 
-    TVector<CBreakpoint*> result;
+    TVector<std::shared_ptr<CBreakpoint>> result;
     for (auto& [id, bp] : m_breakpoints) {
         if (bp->GetLocation() == in_location) {
-            result.push_back(bp.get());
+            result.push_back(bp);
         }
     }
     return result;
 }
 
-TVector<CBreakpoint*> CBreakpointManager::GetAllBreakpoints() {
+TVector<std::shared_ptr<CBreakpoint>> CBreakpointManager::GetAllBreakpoints() {
     std::lock_guard<std::mutex> lock(m_mutex);
 
-    TVector<CBreakpoint*> result;
+    TVector<std::shared_ptr<CBreakpoint>> result;
     result.reserve(m_breakpoints.size());
     for (auto& [id, bp] : m_breakpoints) {
-        result.push_back(bp.get());
+        result.push_back(bp);
     }
     return result;
 }
