@@ -248,12 +248,8 @@ void MainWindow::createDockWidgets()
     m_pStepPaletteDock->setAllowedAreas(Qt::LeftDockWidgetArea | Qt::RightDockWidgetArea);
     m_pStepPaletteDock->setObjectName("stepPaletteDock");  // For saveState/restoreState
     addDockWidget(Qt::LeftDockWidgetArea, m_pStepPaletteDock);
-
-    // Stack palette below sequence editor if it exists
-    if (ui->sequenceEditorDock) {
-        tabifyDockWidget(ui->sequenceEditorDock, m_pStepPaletteDock);
-        ui->sequenceEditorDock->raise();  // Keep sequence editor on top initially
-    }
+    // The sequence editor is the central widget (not a dock), so there is no
+    // sequenceEditorDock to tabify the palette against.
 }
 
 void MainWindow::createStatusBar()

@@ -23,9 +23,16 @@
     <file>icons/delete.svg</file>
     <file>icons/up.svg</file>
     <file>icons/down.svg</file>
+    <file>icons/undo.svg</file>
+    <file>icons/redo.svg</file>
+    <file>icons/cut.svg</file>
+    <file>icons/copy.svg</file>
+    <file>icons/paste.svg</file>
 
     <!-- Other Actions -->
     <file>icons/validate.svg</file>
     <file>icons/help.svg</file>
+    <file>icons/config.svg</file>
+    <file>icons/wait.svg</file>
   </qresource>
 </RCC>

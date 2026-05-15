@@ -24,7 +24,7 @@ int main(int argc, char *argv[])
     QApplication::setStyle(QStyleFactory::create("Fusion"));
 
     // Set application icon
-    QApplication::setWindowIcon(QIcon(":/icons/app_icon.svg"));
+    QApplication::setWindowIcon(QIcon(":/icons/testmate.svg"));
 
     // Create and show main window
     MainWindow mainWindow;
