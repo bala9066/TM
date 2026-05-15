@@ -41,6 +41,43 @@ elseif(UNIX)
     add_definitions(-DTESTMATE_PLATFORM_LINUX)
 endif()
 
+# --------------------------------------------------------------------------
+# Build quality gates: warnings, sanitizers, coverage.
+# These must be set before add_subdirectory() so all targets inherit them.
+# --------------------------------------------------------------------------
+option(TESTMATE_ENABLE_WARNINGS "Enable a strict compiler warning set" ON)
+option(TESTMATE_ENABLE_ASAN "Build with Address/UB sanitizers" OFF)
+
+if(TESTMATE_ENABLE_WARNINGS)
+    if(MSVC)
+        add_compile_options(/W4)
+    else()
+        # Deliberately not -Werror: the existing code has never been built
+        # with warnings, so failing the build would be disruptive.
+        add_compile_options(-Wall -Wextra -Wpedantic)
+    endif()
+endif()
+
+if(TESTMATE_ENABLE_ASAN)
+    if(MSVC)
+        add_compile_options(/fsanitize=address)
+    else()
+        add_compile_options(-fsanitize=address,undefined -fno-omit-frame-pointer)
+        add_link_options(-fsanitize=address,undefined)
+    endif()
+    message(STATUS "TestMATE: Address/UB sanitizers enabled")
+endif()
+
+if(TESTMATE_ENABLE_COVERAGE)
+    if(MSVC)
+        message(WARNING "TESTMATE_ENABLE_COVERAGE is not supported with MSVC; ignoring")
+    else()
+        add_compile_options(--coverage -O0 -g)
+        add_link_options(--coverage)
+        message(STATUS "TestMATE: code coverage instrumentation enabled")
+    endif()
+endif()
+
 # Find dependencies
 # TODO: Enable these as components are implemented
 # find_package(Qt6 REQUIRED COMPONENTS Core Gui Widgets)
