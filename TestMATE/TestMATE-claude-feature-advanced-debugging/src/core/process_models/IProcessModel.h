@@ -17,7 +17,7 @@ namespace TestMATE {
 
 // Forward declarations
 class CExecutionContext;
-class CTestStep;
+class ITestStep;
 class CTestSequence;
 
 //=============================================================================
@@ -57,10 +57,10 @@ enum class EProcessModelType : TInt32 {
 //=============================================================================
 
 /// Callback invoked before each step execution
-using TPreStepCallback = std::function<CResult(CExecutionContext&, CTestStep&)>;
+using TPreStepCallback = std::function<CResult(CExecutionContext&, ITestStep&)>;
 
 /// Callback invoked after each step execution
-using TPostStepCallback = std::function<void(CExecutionContext&, CTestStep&, ETestVerdict)>;
+using TPostStepCallback = std::function<void(CExecutionContext&, ITestStep&, ETestVerdict)>;
 
 /// Callback invoked on execution state change
 using TStateChangeCallback = std::function<void(EProcessModelState, EProcessModelState)>;

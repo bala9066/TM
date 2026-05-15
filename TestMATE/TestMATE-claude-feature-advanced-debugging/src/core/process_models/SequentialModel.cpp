@@ -7,6 +7,8 @@
  **************************************************************************/
 
 #include "SequentialModel.h"
+#include "core/test_sequence/TestSequence.h"
+#include "core/test_sequence/ITestStep.h"
 #include "utils/LogManager.h"
 #include "utils/TimeUtils.h"
 
@@ -106,21 +108,11 @@ void CSequentialModel::ExecutionThreadFunc() {
     LOG_DEBUG(kLogSource, "Execution thread started");
 
     try {
-        SetState(EProcessModelState::kInitializing);
-
-        // Initialize resources (placeholder)
-        // TODO: Implement resource initialization when resource system is ready
-
         SetState(EProcessModelState::kRunning);
 
-        // Get total steps (placeholder - will use actual sequence)
-        TUInt32 totalSteps = GetTotalSteps();
-        if (totalSteps == 0) {
-            // Simulate some steps for testing
-            totalSteps = 10;
-        }
+        // Execute the real test sequence step by step.
+        TUInt32 totalSteps = m_pSequence ? m_pSequence->GetStepCount() : 0;
 
-        // Execute steps sequentially
         for (TUInt32 stepIndex = 0; stepIndex < totalSteps; ++stepIndex) {
             // Check for abort
             if (m_context.IsAbortRequested() ||
@@ -132,8 +124,8 @@ void CSequentialModel::ExecutionThreadFunc() {
             m_uiCurrentStep = stepIndex;
             NotifyProgress(stepIndex, totalSteps);
 
-            // Execute step (placeholder - will use actual step from sequence)
-            ETestVerdict verdict = ExecuteStep(m_context, nullptr);
+            ITestStep* pStep = m_pSequence->GetStep(stepIndex);
+            ETestVerdict verdict = ExecuteStep(m_context, pStep);
 
             if (verdict == ETestVerdict::kAborted) {
                 break;
@@ -144,11 +136,7 @@ void CSequentialModel::ExecutionThreadFunc() {
         }
 
         // Final state
-        if (m_eState == EProcessModelState::kAborted) {
-            // Already in aborted state
-        } else if (m_context.GetFailCount() > 0) {
-            SetState(EProcessModelState::kCompleted);
-        } else {
+        if (m_eState != EProcessModelState::kAborted) {
             SetState(EProcessModelState::kCompleted);
         }
 

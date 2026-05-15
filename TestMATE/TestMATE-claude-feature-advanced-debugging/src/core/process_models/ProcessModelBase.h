@@ -19,7 +19,7 @@ namespace TestMATE {
 
 // Forward declaration
 class CTestSequence;
-class CTestStep;
+class ITestStep;
 
 /**************************************************************************
  * Class: CProcessModelBase
@@ -97,7 +97,7 @@ protected:
      * Returns: Test verdict from step execution
      * Requirements: REQ-PM-007
      **************************************************************************/
-    ETestVerdict ExecuteStep(CExecutionContext& in_out_context, CTestStep* in_pStep);
+    ETestVerdict ExecuteStep(CExecutionContext& in_out_context, ITestStep* in_pStep);
 
     /**************************************************************************
      * Function Name: InvokePreStepCallback
@@ -107,7 +107,7 @@ protected:
      *   in_out_step - Step about to execute
      * Returns: Result from callback
      **************************************************************************/
-    CResult InvokePreStepCallback(CExecutionContext& in_out_context, CTestStep& in_out_step);
+    CResult InvokePreStepCallback(CExecutionContext& in_out_context, ITestStep& in_out_step);
 
     /**************************************************************************
      * Function Name: InvokePostStepCallback
@@ -118,7 +118,7 @@ protected:
      *   in_eVerdict - Step verdict
      **************************************************************************/
     void InvokePostStepCallback(CExecutionContext& in_out_context,
-                                CTestStep& in_step,
+                                ITestStep& in_step,
                                 ETestVerdict in_eVerdict);
 
     /**************************************************************************

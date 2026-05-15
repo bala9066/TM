@@ -7,8 +7,11 @@
  **************************************************************************/
 
 #include "ProcessModelBase.h"
+#include "core/test_sequence/TestSequence.h"
+#include "core/test_sequence/ITestStep.h"
 #include "utils/LogManager.h"
 #include "utils/TimeUtils.h"
+#include <chrono>
 
 namespace TestMATE {
 
@@ -140,8 +143,7 @@ TUInt32 CProcessModelBase::GetCurrentStepIndex() const {
 }
 
 TUInt32 CProcessModelBase::GetTotalSteps() const {
-    // Will be implemented when CTestSequence is available
-    return 0;
+    return m_pSequence ? m_pSequence->GetStepCount() : 0;
 }
 
 TInt64 CProcessModelBase::GetElapsedTimeMs() const {
@@ -215,7 +217,7 @@ bool CProcessModelBase::ValidateStateTransition(EProcessModelState in_eFrom,
 }
 
 ETestVerdict CProcessModelBase::ExecuteStep(CExecutionContext& in_out_context,
-                                             CTestStep* in_pStep) {
+                                             ITestStep* in_pStep) {
     if (!in_pStep) {
         return ETestVerdict::kError;
     }
@@ -245,14 +247,22 @@ ETestVerdict CProcessModelBase::ExecuteStep(CExecutionContext& in_out_context,
         return ETestVerdict::kError;
     }
 
-    // Execute step (placeholder - actual execution when CTestStep is implemented)
-    ETestVerdict verdict = ETestVerdict::kPass;
+    // Execute the real test step.
+    SStepResult stepResult;
+    stepResult.startTime = std::chrono::system_clock::now();
+    CResult execResult = in_pStep->Execute(stepResult);
+    stepResult.endTime = std::chrono::system_clock::now();
+
+    ETestVerdict verdict = stepResult.verdict;
+    if (execResult.IsFailure() && verdict == ETestVerdict::kNone) {
+        verdict = ETestVerdict::kError;
+    }
 
     // Update context
     in_out_context.SetCurrentStepVerdict(verdict);
     if (verdict == ETestVerdict::kPass) {
         in_out_context.IncrementPassCount();
-    } else if (verdict == ETestVerdict::kFail) {
+    } else if (verdict == ETestVerdict::kFail || verdict == ETestVerdict::kError) {
         in_out_context.IncrementFailCount();
     }
 
@@ -263,7 +273,7 @@ ETestVerdict CProcessModelBase::ExecuteStep(CExecutionContext& in_out_context,
 }
 
 CResult CProcessModelBase::InvokePreStepCallback(CExecutionContext& in_out_context,
-                                                  CTestStep& in_out_step) {
+                                                  ITestStep& in_out_step) {
     if (m_fnPreStepCallback) {
         return m_fnPreStepCallback(in_out_context, in_out_step);
     }
@@ -271,7 +281,7 @@ CResult CProcessModelBase::InvokePreStepCallback(CExecutionContext& in_out_conte
 }
 
 void CProcessModelBase::InvokePostStepCallback(CExecutionContext& in_out_context,
-                                                CTestStep& in_step,
+                                                ITestStep& in_step,
                                                 ETestVerdict in_eVerdict) {
     if (m_fnPostStepCallback) {
         m_fnPostStepCallback(in_out_context, in_step, in_eVerdict);
