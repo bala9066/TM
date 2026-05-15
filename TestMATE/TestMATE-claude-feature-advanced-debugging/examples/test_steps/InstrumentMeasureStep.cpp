@@ -74,7 +74,7 @@ CResult CInstrumentMeasureStep::Execute(SStepResult& out_result) {
         out_result.endTime = std::chrono::steady_clock::now();
         out_result.durationMs = std::chrono::duration_cast<std::chrono::milliseconds>(
             out_result.endTime - out_result.startTime).count();
-        return TESTMATE_ERROR(EErrorCode::kInvalidParameter, "Missing instrument_id");
+        return TESTMATE_FAILURE(EErrorCode::kInvalidParameter, "Missing instrument_id");
     }
     m_strInstrumentId = instParam.value();
 
@@ -85,7 +85,7 @@ CResult CInstrumentMeasureStep::Execute(SStepResult& out_result) {
         out_result.endTime = std::chrono::steady_clock::now();
         out_result.durationMs = std::chrono::duration_cast<std::chrono::milliseconds>(
             out_result.endTime - out_result.startTime).count();
-        return TESTMATE_ERROR(EErrorCode::kInvalidParameter, "Missing command");
+        return TESTMATE_FAILURE(EErrorCode::kInvalidParameter, "Missing command");
     }
     m_strCommand = cmdParam.value();
 
@@ -122,7 +122,7 @@ CResult CInstrumentMeasureStep::Execute(SStepResult& out_result) {
         out_result.endTime = std::chrono::steady_clock::now();
         out_result.durationMs = std::chrono::duration_cast<std::chrono::milliseconds>(
             out_result.endTime - out_result.startTime).count();
-        return TESTMATE_ERROR(EErrorCode::kNotFound, "Instrument not found");
+        return TESTMATE_FAILURE(EErrorCode::kNotFound, "Instrument not found");
     }
 
     // Check if instrument is connected
@@ -132,7 +132,7 @@ CResult CInstrumentMeasureStep::Execute(SStepResult& out_result) {
         out_result.endTime = std::chrono::steady_clock::now();
         out_result.durationMs = std::chrono::duration_cast<std::chrono::milliseconds>(
             out_result.endTime - out_result.startTime).count();
-        return TESTMATE_ERROR(EErrorCode::kNotConnected, "Instrument not connected");
+        return TESTMATE_FAILURE(EErrorCode::kConnectionFailed, "Instrument not connected");
     }
 
     // Execute measurement command

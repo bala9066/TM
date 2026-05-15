@@ -42,14 +42,14 @@ CPostgreSqlDataStore::~CPostgreSqlDataStore() {
 
 CResult CPostgreSqlDataStore::Open(const SPostgreSqlConfig& config) {
 #ifndef TESTMATE_POSTGRESQL_SUPPORT
-    return TESTMATE_ERROR(EErrorCode::kNotImplemented,
+    return TESTMATE_FAILURE(EErrorCode::kNotImplemented,
                         "PostgreSQL support not compiled in. "
                         "Rebuild with -DTESTMATE_POSTGRESQL_SUPPORT=ON");
 #else
     std::lock_guard<std::mutex> lock(m_mutex);
 
     if (m_pConnection) {
-        return TESTMATE_ERROR(EErrorCode::kAlreadyConnected,
+        return TESTMATE_FAILURE(EErrorCode::kAlreadyConnected,
                             "Already connected to database");
     }
 
@@ -62,7 +62,7 @@ CResult CPostgreSqlDataStore::Open(const SPostgreSqlConfig& config) {
     m_pConnection = PQconnectdb(connStr.c_str());
 
     if (!m_pConnection) {
-        return TESTMATE_ERROR(EErrorCode::kDatabaseConnectionFailed,
+        return TESTMATE_FAILURE(EErrorCode::kDatabaseConnectionFailed,
                             "Failed to allocate connection");
     }
 
@@ -71,7 +71,7 @@ CResult CPostgreSqlDataStore::Open(const SPostgreSqlConfig& config) {
         TString error = PQerrorMessage(m_pConnection);
         PQfinish(m_pConnection);
         m_pConnection = nullptr;
-        return TESTMATE_ERROR(EErrorCode::kDatabaseConnectionFailed,
+        return TESTMATE_FAILURE(EErrorCode::kDatabaseConnectionFailed,
                             "Connection failed: " + error);
     }
 
@@ -94,13 +94,13 @@ CResult CPostgreSqlDataStore::Open(const SPostgreSqlConfig& config) {
 
 CResult CPostgreSqlDataStore::Open(const TString& in_strConnectionString) {
 #ifndef TESTMATE_POSTGRESQL_SUPPORT
-    return TESTMATE_ERROR(EErrorCode::kNotImplemented,
+    return TESTMATE_FAILURE(EErrorCode::kNotImplemented,
                         "PostgreSQL support not enabled");
 #else
     std::lock_guard<std::mutex> lock(m_mutex);
 
     if (m_pConnection) {
-        return TESTMATE_ERROR(EErrorCode::kAlreadyConnected,
+        return TESTMATE_FAILURE(EErrorCode::kAlreadyConnected,
                             "Already connected to database");
     }
 
@@ -110,7 +110,7 @@ CResult CPostgreSqlDataStore::Open(const TString& in_strConnectionString) {
         TString error = m_pConnection ? PQerrorMessage(m_pConnection) : "Connection failed";
         if (m_pConnection) PQfinish(m_pConnection);
         m_pConnection = nullptr;
-        return TESTMATE_ERROR(EErrorCode::kDatabaseConnectionFailed, error);
+        return TESTMATE_FAILURE(EErrorCode::kDatabaseConnectionFailed, error);
     }
 
     LOG_INFO("Connected to PostgreSQL database");
@@ -149,12 +149,12 @@ bool CPostgreSqlDataStore::IsOpen() const {
 
 CResult CPostgreSqlDataStore::SaveTestData(const STestDataRecord& in_data) {
 #ifndef TESTMATE_POSTGRESQL_SUPPORT
-    return TESTMATE_ERROR(EErrorCode::kNotImplemented, "PostgreSQL support not enabled");
+    return TESTMATE_FAILURE(EErrorCode::kNotImplemented, "PostgreSQL support not enabled");
 #else
     std::lock_guard<std::mutex> lock(m_mutex);
 
     if (!CheckConnection()) {
-        return TESTMATE_ERROR(EErrorCode::kNotConnected, "Not connected to database");
+        return TESTMATE_FAILURE(EErrorCode::kNotConnected, "Not connected to database");
     }
 
     // Build INSERT query
@@ -185,12 +185,12 @@ CResult CPostgreSqlDataStore::SaveTestData(const STestDataRecord& in_data) {
 CResult CPostgreSqlDataStore::GetTestData(const TString& in_strTestId,
                                          STestDataRecord& out_data) {
 #ifndef TESTMATE_POSTGRESQL_SUPPORT
-    return TESTMATE_ERROR(EErrorCode::kNotImplemented, "PostgreSQL support not enabled");
+    return TESTMATE_FAILURE(EErrorCode::kNotImplemented, "PostgreSQL support not enabled");
 #else
     std::lock_guard<std::mutex> lock(m_mutex);
 
     if (!CheckConnection()) {
-        return TESTMATE_ERROR(EErrorCode::kNotConnected, "Not connected to database");
+        return TESTMATE_FAILURE(EErrorCode::kNotConnected, "Not connected to database");
     }
 
     std::ostringstream query;
@@ -205,7 +205,7 @@ CResult CPostgreSqlDataStore::GetTestData(const TString& in_strTestId,
 
     if (PQntuples(pgResult) == 0) {
         PQclear(pgResult);
-        return TESTMATE_ERROR(EErrorCode::kNotFound,
+        return TESTMATE_FAILURE(EErrorCode::kNotFound,
                             "Test ID not found: " + in_strTestId);
     }
 
@@ -219,12 +219,12 @@ CResult CPostgreSqlDataStore::GetTestData(const TString& in_strTestId,
 
 CResult CPostgreSqlDataStore::UpdateTestData(const STestDataRecord& in_data) {
 #ifndef TESTMATE_POSTGRESQL_SUPPORT
-    return TESTMATE_ERROR(EErrorCode::kNotImplemented, "PostgreSQL support not enabled");
+    return TESTMATE_FAILURE(EErrorCode::kNotImplemented, "PostgreSQL support not enabled");
 #else
     std::lock_guard<std::mutex> lock(m_mutex);
 
     if (!CheckConnection()) {
-        return TESTMATE_ERROR(EErrorCode::kNotConnected, "Not connected to database");
+        return TESTMATE_FAILURE(EErrorCode::kNotConnected, "Not connected to database");
     }
 
     std::ostringstream query;
@@ -245,12 +245,12 @@ CResult CPostgreSqlDataStore::UpdateTestData(const STestDataRecord& in_data) {
 
 CResult CPostgreSqlDataStore::DeleteTestData(const TString& in_strTestId) {
 #ifndef TESTMATE_POSTGRESQL_SUPPORT
-    return TESTMATE_ERROR(EErrorCode::kNotImplemented, "PostgreSQL support not enabled");
+    return TESTMATE_FAILURE(EErrorCode::kNotImplemented, "PostgreSQL support not enabled");
 #else
     std::lock_guard<std::mutex> lock(m_mutex);
 
     if (!CheckConnection()) {
-        return TESTMATE_ERROR(EErrorCode::kNotConnected, "Not connected to database");
+        return TESTMATE_FAILURE(EErrorCode::kNotConnected, "Not connected to database");
     }
 
     std::ostringstream query;
@@ -270,12 +270,12 @@ CResult CPostgreSqlDataStore::DeleteTestData(const TString& in_strTestId) {
 CResult CPostgreSqlDataStore::GetTestDataByLot(const TString& in_strLotId,
                                               std::vector<STestDataRecord>& out_data) {
 #ifndef TESTMATE_POSTGRESQL_SUPPORT
-    return TESTMATE_ERROR(EErrorCode::kNotImplemented, "PostgreSQL support not enabled");
+    return TESTMATE_FAILURE(EErrorCode::kNotImplemented, "PostgreSQL support not enabled");
 #else
     std::lock_guard<std::mutex> lock(m_mutex);
 
     if (!CheckConnection()) {
-        return TESTMATE_ERROR(EErrorCode::kNotConnected, "Not connected to database");
+        return TESTMATE_FAILURE(EErrorCode::kNotConnected, "Not connected to database");
     }
 
     std::ostringstream query;
@@ -310,12 +310,12 @@ CResult CPostgreSqlDataStore::GetTestDataByDateRange(const TString& in_strStartD
                                                      const TString& in_strEndDate,
                                                      std::vector<STestDataRecord>& out_data) {
 #ifndef TESTMATE_POSTGRESQL_SUPPORT
-    return TESTMATE_ERROR(EErrorCode::kNotImplemented, "PostgreSQL support not enabled");
+    return TESTMATE_FAILURE(EErrorCode::kNotImplemented, "PostgreSQL support not enabled");
 #else
     std::lock_guard<std::mutex> lock(m_mutex);
 
     if (!CheckConnection()) {
-        return TESTMATE_ERROR(EErrorCode::kNotConnected, "Not connected to database");
+        return TESTMATE_FAILURE(EErrorCode::kNotConnected, "Not connected to database");
     }
 
     std::ostringstream query;
@@ -349,12 +349,12 @@ CResult CPostgreSqlDataStore::GetTestDataByDateRange(const TString& in_strStartD
 
 CResult CPostgreSqlDataStore::Query(const TString& in_strQuery, SQueryResult& out_result) {
 #ifndef TESTMATE_POSTGRESQL_SUPPORT
-    return TESTMATE_ERROR(EErrorCode::kNotImplemented, "PostgreSQL support not enabled");
+    return TESTMATE_FAILURE(EErrorCode::kNotImplemented, "PostgreSQL support not enabled");
 #else
     std::lock_guard<std::mutex> lock(m_mutex);
 
     if (!CheckConnection()) {
-        return TESTMATE_ERROR(EErrorCode::kNotConnected, "Not connected to database");
+        return TESTMATE_FAILURE(EErrorCode::kNotConnected, "Not connected to database");
     }
 
     PGresult* pgResult = nullptr;
@@ -395,7 +395,7 @@ CResult CPostgreSqlDataStore::BeginTransaction() {
     std::lock_guard<std::mutex> lock(m_mutex);
 
     if (m_bInTransaction) {
-        return TESTMATE_ERROR(EErrorCode::kInvalidState,
+        return TESTMATE_FAILURE(EErrorCode::kInvalidState,
                             "Transaction already in progress");
     }
 
@@ -405,7 +405,7 @@ CResult CPostgreSqlDataStore::BeginTransaction() {
     }
     return result;
 #else
-    return TESTMATE_ERROR(EErrorCode::kNotImplemented, "PostgreSQL support not enabled");
+    return TESTMATE_FAILURE(EErrorCode::kNotImplemented, "PostgreSQL support not enabled");
 #endif
 }
 
@@ -414,14 +414,14 @@ CResult CPostgreSqlDataStore::CommitTransaction() {
     std::lock_guard<std::mutex> lock(m_mutex);
 
     if (!m_bInTransaction) {
-        return TESTMATE_ERROR(EErrorCode::kInvalidState, "No transaction in progress");
+        return TESTMATE_FAILURE(EErrorCode::kInvalidState, "No transaction in progress");
     }
 
     auto result = ExecuteQuery("COMMIT");
     m_bInTransaction = false;
     return result;
 #else
-    return TESTMATE_ERROR(EErrorCode::kNotImplemented, "PostgreSQL support not enabled");
+    return TESTMATE_FAILURE(EErrorCode::kNotImplemented, "PostgreSQL support not enabled");
 #endif
 }
 
@@ -430,14 +430,14 @@ CResult CPostgreSqlDataStore::RollbackTransaction() {
     std::lock_guard<std::mutex> lock(m_mutex);
 
     if (!m_bInTransaction) {
-        return TESTMATE_ERROR(EErrorCode::kInvalidState, "No transaction in progress");
+        return TESTMATE_FAILURE(EErrorCode::kInvalidState, "No transaction in progress");
     }
 
     auto result = ExecuteQuery("ROLLBACK");
     m_bInTransaction = false;
     return result;
 #else
-    return TESTMATE_ERROR(EErrorCode::kNotImplemented, "PostgreSQL support not enabled");
+    return TESTMATE_FAILURE(EErrorCode::kNotImplemented, "PostgreSQL support not enabled");
 #endif
 }
 
@@ -446,7 +446,7 @@ CResult CPostgreSqlDataStore::CreateSavepoint(const TString& in_strName) {
     std::lock_guard<std::mutex> lock(m_mutex);
     return ExecuteQuery("SAVEPOINT " + in_strName);
 #else
-    return TESTMATE_ERROR(EErrorCode::kNotImplemented, "PostgreSQL support not enabled");
+    return TESTMATE_FAILURE(EErrorCode::kNotImplemented, "PostgreSQL support not enabled");
 #endif
 }
 
@@ -455,7 +455,7 @@ CResult CPostgreSqlDataStore::RollbackToSavepoint(const TString& in_strName) {
     std::lock_guard<std::mutex> lock(m_mutex);
     return ExecuteQuery("ROLLBACK TO SAVEPOINT " + in_strName);
 #else
-    return TESTMATE_ERROR(EErrorCode::kNotImplemented, "PostgreSQL support not enabled");
+    return TESTMATE_FAILURE(EErrorCode::kNotImplemented, "PostgreSQL support not enabled");
 #endif
 }
 
@@ -464,7 +464,7 @@ CResult CPostgreSqlDataStore::ReleaseSavepoint(const TString& in_strName) {
     std::lock_guard<std::mutex> lock(m_mutex);
     return ExecuteQuery("RELEASE SAVEPOINT " + in_strName);
 #else
-    return TESTMATE_ERROR(EErrorCode::kNotImplemented, "PostgreSQL support not enabled");
+    return TESTMATE_FAILURE(EErrorCode::kNotImplemented, "PostgreSQL support not enabled");
 #endif
 }
 
@@ -474,12 +474,12 @@ CResult CPostgreSqlDataStore::ReleaseSavepoint(const TString& in_strName) {
 
 CResult CPostgreSqlDataStore::InitializeSchema() {
 #ifndef TESTMATE_POSTGRESQL_SUPPORT
-    return TESTMATE_ERROR(EErrorCode::kNotImplemented, "PostgreSQL support not enabled");
+    return TESTMATE_FAILURE(EErrorCode::kNotImplemented, "PostgreSQL support not enabled");
 #else
     std::lock_guard<std::mutex> lock(m_mutex);
 
     if (!CheckConnection()) {
-        return TESTMATE_ERROR(EErrorCode::kNotConnected, "Not connected to database");
+        return TESTMATE_FAILURE(EErrorCode::kNotConnected, "Not connected to database");
     }
 
     // Create tables
@@ -575,7 +575,7 @@ CResult CPostgreSqlDataStore::Vacuum(bool in_bFull) {
     TString query = in_bFull ? "VACUUM FULL" : "VACUUM";
     return ExecuteQuery(query);
 #else
-    return TESTMATE_ERROR(EErrorCode::kNotImplemented, "PostgreSQL support not enabled");
+    return TESTMATE_FAILURE(EErrorCode::kNotImplemented, "PostgreSQL support not enabled");
 #endif
 }
 
@@ -584,7 +584,7 @@ CResult CPostgreSqlDataStore::Analyze() {
     std::lock_guard<std::mutex> lock(m_mutex);
     return ExecuteQuery("ANALYZE");
 #else
-    return TESTMATE_ERROR(EErrorCode::kNotImplemented, "PostgreSQL support not enabled");
+    return TESTMATE_FAILURE(EErrorCode::kNotImplemented, "PostgreSQL support not enabled");
 #endif
 }
 
@@ -610,14 +610,14 @@ CResult CPostgreSqlDataStore::ExecuteQuery(const TString& in_strQuery) {
     if (status != PGRES_COMMAND_OK && status != PGRES_TUPLES_OK) {
         TString error = PQerrorMessage(m_pConnection);
         PQclear(result);
-        return TESTMATE_ERROR(EErrorCode::kDatabaseQueryFailed,
+        return TESTMATE_FAILURE(EErrorCode::kDatabaseQueryFailed,
                             "Query failed: " + error);
     }
 
     PQclear(result);
     return TESTMATE_SUCCESS();
 #else
-    return TESTMATE_ERROR(EErrorCode::kNotImplemented, "PostgreSQL support not enabled");
+    return TESTMATE_FAILURE(EErrorCode::kNotImplemented, "PostgreSQL support not enabled");
 #endif
 }
 
@@ -637,13 +637,13 @@ CResult CPostgreSqlDataStore::ExecuteQueryWithResult(const TString& in_strQuery,
         TString error = PQerrorMessage(m_pConnection);
         PQclear(*out_pResult);
         *out_pResult = nullptr;
-        return TESTMATE_ERROR(EErrorCode::kDatabaseQueryFailed,
+        return TESTMATE_FAILURE(EErrorCode::kDatabaseQueryFailed,
                             "Query failed: " + error);
     }
 
     return TESTMATE_SUCCESS();
 #else
-    return TESTMATE_ERROR(EErrorCode::kNotImplemented, "PostgreSQL support not enabled");
+    return TESTMATE_FAILURE(EErrorCode::kNotImplemented, "PostgreSQL support not enabled");
 #endif
 }
 
@@ -700,7 +700,7 @@ CResult CPostgreSqlDataStore::ParseTestData(PGresult* in_pResult, int in_row,
 
     return TESTMATE_SUCCESS();
 #else
-    return TESTMATE_ERROR(EErrorCode::kNotImplemented, "PostgreSQL support not enabled");
+    return TESTMATE_FAILURE(EErrorCode::kNotImplemented, "PostgreSQL support not enabled");
 #endif
 }
 
@@ -722,7 +722,7 @@ CResult CPostgreSqlDataStore::Reconnect() {
     Close();
     return Open(m_config);
 #else
-    return TESTMATE_ERROR(EErrorCode::kNotImplemented, "PostgreSQL support not enabled");
+    return TESTMATE_FAILURE(EErrorCode::kNotImplemented, "PostgreSQL support not enabled");
 #endif
 }
 

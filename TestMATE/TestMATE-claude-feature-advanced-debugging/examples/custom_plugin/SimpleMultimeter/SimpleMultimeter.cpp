@@ -42,7 +42,7 @@ CResult CSimpleMultimeter::Initialize() {
     std::lock_guard<std::mutex> lock(m_mutex);
 
     if (m_eState != EPluginState::kUnloaded) {
-        return TESTMATE_ERROR(EErrorCode::kInvalidState, "Plugin already initialized");
+        return TESTMATE_FAILURE(EErrorCode::kInvalidState, "Plugin already initialized");
     }
 
     // Perform initialization
@@ -78,7 +78,7 @@ CResult CSimpleMultimeter::Connect(const TString& in_strAddress) {
     std::lock_guard<std::mutex> lock(m_mutex);
 
     if (m_bConnected) {
-        return TESTMATE_ERROR(EErrorCode::kAlreadyConnected, "Already connected to instrument");
+        return TESTMATE_FAILURE(EErrorCode::kAlreadyConnected, "Already connected to instrument");
     }
 
     m_strAddress = in_strAddress;
@@ -106,7 +106,7 @@ CResult CSimpleMultimeter::Disconnect() {
     std::lock_guard<std::mutex> lock(m_mutex);
 
     if (!m_bConnected) {
-        return TESTMATE_ERROR(EErrorCode::kNotConnected, "Not connected to instrument");
+        return TESTMATE_FAILURE(EErrorCode::kNotConnected, "Not connected to instrument");
     }
 
     // Close connection resources
@@ -125,14 +125,14 @@ CResult CSimpleMultimeter::Write(const TString& in_strCommand) {
     std::lock_guard<std::mutex> lock(m_mutex);
 
     if (!m_bConnected) {
-        return TESTMATE_ERROR(EErrorCode::kNotConnected, "Not connected to instrument");
+        return TESTMATE_FAILURE(EErrorCode::kNotConnected, "Not connected to instrument");
     }
 
     // For simulated device, just validate command format
     if (m_bSimulated) {
         if (in_strCommand.empty()) {
             SetError("Empty command");
-            return TESTMATE_ERROR(EErrorCode::kInvalidParameter, "Empty command");
+            return TESTMATE_FAILURE(EErrorCode::kInvalidParameter, "Empty command");
         }
         return TESTMATE_SUCCESS();
     }
@@ -147,7 +147,7 @@ CResult CSimpleMultimeter::Read(TString& out_strResponse, TInt64 in_timeoutMs) {
     std::lock_guard<std::mutex> lock(m_mutex);
 
     if (!m_bConnected) {
-        return TESTMATE_ERROR(EErrorCode::kNotConnected, "Not connected to instrument");
+        return TESTMATE_FAILURE(EErrorCode::kNotConnected, "Not connected to instrument");
     }
 
     if (m_bSimulated) {
@@ -170,7 +170,7 @@ CResult CSimpleMultimeter::Query(const TString& in_strCommand,
     std::lock_guard<std::mutex> lock(m_mutex);
 
     if (!m_bConnected) {
-        return TESTMATE_ERROR(EErrorCode::kNotConnected, "Not connected to instrument");
+        return TESTMATE_FAILURE(EErrorCode::kNotConnected, "Not connected to instrument");
     }
 
     // Process SCPI command
@@ -185,7 +185,7 @@ CResult CSimpleMultimeter::MeasureVoltage(TDouble& out_voltage) {
     std::lock_guard<std::mutex> lock(m_mutex);
 
     if (!m_bConnected) {
-        return TESTMATE_ERROR(EErrorCode::kNotConnected, "Not connected to instrument");
+        return TESTMATE_FAILURE(EErrorCode::kNotConnected, "Not connected to instrument");
     }
 
     m_eMode = EMeasureMode::kVoltageDC;
@@ -206,7 +206,7 @@ CResult CSimpleMultimeter::MeasureCurrent(TDouble& out_current) {
     std::lock_guard<std::mutex> lock(m_mutex);
 
     if (!m_bConnected) {
-        return TESTMATE_ERROR(EErrorCode::kNotConnected, "Not connected to instrument");
+        return TESTMATE_FAILURE(EErrorCode::kNotConnected, "Not connected to instrument");
     }
 
     m_eMode = EMeasureMode::kCurrentDC;
@@ -226,7 +226,7 @@ CResult CSimpleMultimeter::MeasureResistance(TDouble& out_resistance) {
     std::lock_guard<std::mutex> lock(m_mutex);
 
     if (!m_bConnected) {
-        return TESTMATE_ERROR(EErrorCode::kNotConnected, "Not connected to instrument");
+        return TESTMATE_FAILURE(EErrorCode::kNotConnected, "Not connected to instrument");
     }
 
     m_eMode = EMeasureMode::kResistance;
@@ -310,7 +310,7 @@ CResult CSimpleMultimeter::ProcessSCPICommand(const TString& in_strCommand,
         return result;
     }
 
-    return TESTMATE_ERROR(EErrorCode::kInvalidParameter, "Unknown SCPI command");
+    return TESTMATE_FAILURE(EErrorCode::kInvalidParameter, "Unknown SCPI command");
 }
 
 } // namespace TestMATEPlugins

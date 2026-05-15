@@ -172,11 +172,13 @@ using FPluginDestroyFunc = void (*)(IPlugin*);
  **************************************************************************/
 #define TESTMATE_PLUGIN_EXPORT extern "C"
 
+// IPlugin is fully qualified so the macro works when invoked at global
+// scope (the usual case, after the plugin's own namespace closes).
 #define TESTMATE_DECLARE_PLUGIN(ClassName) \
-    TESTMATE_PLUGIN_EXPORT IPlugin* CreatePlugin() { \
+    TESTMATE_PLUGIN_EXPORT ::TestMATE::IPlugin* CreatePlugin() { \
         return new ClassName(); \
     } \
-    TESTMATE_PLUGIN_EXPORT void DestroyPlugin(IPlugin* plugin) { \
+    TESTMATE_PLUGIN_EXPORT void DestroyPlugin(::TestMATE::IPlugin* plugin) { \
         delete plugin; \
     } \
     TESTMATE_PLUGIN_EXPORT const char* GetPluginApiVersion() { \

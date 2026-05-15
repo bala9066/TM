@@ -88,7 +88,7 @@ CResult CCalculationStep::Execute(SStepResult& out_result) {
             out_result.endTime = std::chrono::steady_clock::now();
             out_result.durationMs = std::chrono::duration_cast<std::chrono::milliseconds>(
                 out_result.endTime - out_result.startTime).count();
-            return TESTMATE_ERROR(EErrorCode::kInvalidParameter, "Unknown operation");
+            return TESTMATE_FAILURE(EErrorCode::kInvalidParameter, "Unknown operation");
         }
     }
 
@@ -99,7 +99,7 @@ CResult CCalculationStep::Execute(SStepResult& out_result) {
         out_result.endTime = std::chrono::steady_clock::now();
         out_result.durationMs = std::chrono::duration_cast<std::chrono::milliseconds>(
             out_result.endTime - out_result.startTime).count();
-        return TESTMATE_ERROR(EErrorCode::kInvalidParameter, "Invalid operands");
+        return TESTMATE_FAILURE(EErrorCode::kInvalidParameter, "Invalid operands");
     }
 
     // Get optional parameters
@@ -127,7 +127,7 @@ CResult CCalculationStep::Execute(SStepResult& out_result) {
         out_result.endTime = std::chrono::steady_clock::now();
         out_result.durationMs = std::chrono::duration_cast<std::chrono::milliseconds>(
             out_result.endTime - out_result.startTime).count();
-        return TESTMATE_ERROR(EErrorCode::kExecutionFailed, e.what());
+        return TESTMATE_FAILURE(EErrorCode::kExecutionFailed, e.what());
     }
 
     // Format result

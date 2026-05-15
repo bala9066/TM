@@ -30,7 +30,7 @@ SPluginInfo CCustomMeasurementStep::GetInfo() const {
 CResult CCustomMeasurementStep::Initialize() {
     std::lock_guard<std::mutex> lock(m_mutex);
     if (m_eState != EPluginState::kUnloaded) {
-        return TESTMATE_ERROR(EErrorCode::kInvalidState, "Already initialized");
+        return TESTMATE_FAILURE(EErrorCode::kInvalidState, "Already initialized");
     }
     m_eState = EPluginState::kInitialized;
     return TESTMATE_SUCCESS();

@@ -51,14 +51,14 @@ CMySqlDataStore::~CMySqlDataStore() {
 
 CResult CMySqlDataStore::Open(const SMySqlConfig& config) {
 #ifndef TESTMATE_MYSQL_SUPPORT
-    return TESTMATE_ERROR(EErrorCode::kNotImplemented,
+    return TESTMATE_FAILURE(EErrorCode::kNotImplemented,
                         "MySQL support not compiled in. "
                         "Rebuild with -DTESTMATE_MYSQL_SUPPORT=ON");
 #else
     std::lock_guard<std::mutex> lock(m_mutex);
 
     if (m_pConnection) {
-        return TESTMATE_ERROR(EErrorCode::kAlreadyConnected,
+        return TESTMATE_FAILURE(EErrorCode::kAlreadyConnected,
                             "Already connected to database");
     }
 
@@ -67,7 +67,7 @@ CResult CMySqlDataStore::Open(const SMySqlConfig& config) {
     // Initialize MySQL connection
     m_pConnection = mysql_init(nullptr);
     if (!m_pConnection) {
-        return TESTMATE_ERROR(EErrorCode::kDatabaseConnectionFailed,
+        return TESTMATE_FAILURE(EErrorCode::kDatabaseConnectionFailed,
                             "Failed to initialize MySQL connection");
     }
 
@@ -100,7 +100,7 @@ CResult CMySqlDataStore::Open(const SMySqlConfig& config) {
         TString error = mysql_error(m_pConnection);
         mysql_close(m_pConnection);
         m_pConnection = nullptr;
-        return TESTMATE_ERROR(EErrorCode::kDatabaseConnectionFailed,
+        return TESTMATE_FAILURE(EErrorCode::kDatabaseConnectionFailed,
                             "Connection failed: " + error);
     }
 
@@ -152,12 +152,12 @@ bool CMySqlDataStore::IsOpen() const {
 
 CResult CMySqlDataStore::SaveTestData(const STestDataRecord& in_data) {
 #ifndef TESTMATE_MYSQL_SUPPORT
-    return TESTMATE_ERROR(EErrorCode::kNotImplemented, "MySQL support not enabled");
+    return TESTMATE_FAILURE(EErrorCode::kNotImplemented, "MySQL support not enabled");
 #else
     std::lock_guard<std::mutex> lock(m_mutex);
 
     if (!CheckConnection()) {
-        return TESTMATE_ERROR(EErrorCode::kNotConnected, "Not connected to database");
+        return TESTMATE_FAILURE(EErrorCode::kNotConnected, "Not connected to database");
     }
 
     // Build INSERT query
@@ -186,12 +186,12 @@ CResult CMySqlDataStore::SaveTestData(const STestDataRecord& in_data) {
 CResult CMySqlDataStore::GetTestData(const TString& in_strTestId,
                                     STestDataRecord& out_data) {
 #ifndef TESTMATE_MYSQL_SUPPORT
-    return TESTMATE_ERROR(EErrorCode::kNotImplemented, "MySQL support not enabled");
+    return TESTMATE_FAILURE(EErrorCode::kNotImplemented, "MySQL support not enabled");
 #else
     std::lock_guard<std::mutex> lock(m_mutex);
 
     if (!CheckConnection()) {
-        return TESTMATE_ERROR(EErrorCode::kNotConnected, "Not connected to database");
+        return TESTMATE_FAILURE(EErrorCode::kNotConnected, "Not connected to database");
     }
 
     std::ostringstream query;
@@ -206,7 +206,7 @@ CResult CMySqlDataStore::GetTestData(const TString& in_strTestId,
 
     if (mysql_num_rows(mysqlResult) == 0) {
         mysql_free_result(mysqlResult);
-        return TESTMATE_ERROR(EErrorCode::kNotFound,
+        return TESTMATE_FAILURE(EErrorCode::kNotFound,
                             "Test ID not found: " + in_strTestId);
     }
 
@@ -220,12 +220,12 @@ CResult CMySqlDataStore::GetTestData(const TString& in_strTestId,
 
 CResult CMySqlDataStore::UpdateTestData(const STestDataRecord& in_data) {
 #ifndef TESTMATE_MYSQL_SUPPORT
-    return TESTMATE_ERROR(EErrorCode::kNotImplemented, "MySQL support not enabled");
+    return TESTMATE_FAILURE(EErrorCode::kNotImplemented, "MySQL support not enabled");
 #else
     std::lock_guard<std::mutex> lock(m_mutex);
 
     if (!CheckConnection()) {
-        return TESTMATE_ERROR(EErrorCode::kNotConnected, "Not connected to database");
+        return TESTMATE_FAILURE(EErrorCode::kNotConnected, "Not connected to database");
     }
 
     std::ostringstream query;
@@ -250,12 +250,12 @@ CResult CMySqlDataStore::UpdateTestData(const STestDataRecord& in_data) {
 
 CResult CMySqlDataStore::DeleteTestData(const TString& in_strTestId) {
 #ifndef TESTMATE_MYSQL_SUPPORT
-    return TESTMATE_ERROR(EErrorCode::kNotImplemented, "MySQL support not enabled");
+    return TESTMATE_FAILURE(EErrorCode::kNotImplemented, "MySQL support not enabled");
 #else
     std::lock_guard<std::mutex> lock(m_mutex);
 
     if (!CheckConnection()) {
-        return TESTMATE_ERROR(EErrorCode::kNotConnected, "Not connected to database");
+        return TESTMATE_FAILURE(EErrorCode::kNotConnected, "Not connected to database");
     }
 
     std::ostringstream query;
@@ -279,12 +279,12 @@ CResult CMySqlDataStore::DeleteTestData(const TString& in_strTestId) {
 CResult CMySqlDataStore::GetTestDataByLot(const TString& in_strLotId,
                                          std::vector<STestDataRecord>& out_data) {
 #ifndef TESTMATE_MYSQL_SUPPORT
-    return TESTMATE_ERROR(EErrorCode::kNotImplemented, "MySQL support not enabled");
+    return TESTMATE_FAILURE(EErrorCode::kNotImplemented, "MySQL support not enabled");
 #else
     std::lock_guard<std::mutex> lock(m_mutex);
 
     if (!CheckConnection()) {
-        return TESTMATE_ERROR(EErrorCode::kNotConnected, "Not connected to database");
+        return TESTMATE_FAILURE(EErrorCode::kNotConnected, "Not connected to database");
     }
 
     std::ostringstream query;
@@ -319,12 +319,12 @@ CResult CMySqlDataStore::GetTestDataByDateRange(const TString& in_strStartDate,
                                                const TString& in_strEndDate,
                                                std::vector<STestDataRecord>& out_data) {
 #ifndef TESTMATE_MYSQL_SUPPORT
-    return TESTMATE_ERROR(EErrorCode::kNotImplemented, "MySQL support not enabled");
+    return TESTMATE_FAILURE(EErrorCode::kNotImplemented, "MySQL support not enabled");
 #else
     std::lock_guard<std::mutex> lock(m_mutex);
 
     if (!CheckConnection()) {
-        return TESTMATE_ERROR(EErrorCode::kNotConnected, "Not connected to database");
+        return TESTMATE_FAILURE(EErrorCode::kNotConnected, "Not connected to database");
     }
 
     std::ostringstream query;
@@ -353,12 +353,12 @@ CResult CMySqlDataStore::GetTestDataByDateRange(const TString& in_strStartDate,
 
 CResult CMySqlDataStore::Query(const TString& in_strQuery, SQueryResult& out_result) {
 #ifndef TESTMATE_MYSQL_SUPPORT
-    return TESTMATE_ERROR(EErrorCode::kNotImplemented, "MySQL support not enabled");
+    return TESTMATE_FAILURE(EErrorCode::kNotImplemented, "MySQL support not enabled");
 #else
     std::lock_guard<std::mutex> lock(m_mutex);
 
     if (!CheckConnection()) {
-        return TESTMATE_ERROR(EErrorCode::kNotConnected, "Not connected to database");
+        return TESTMATE_FAILURE(EErrorCode::kNotConnected, "Not connected to database");
     }
 
     MYSQL_RES* mysqlResult = nullptr;
@@ -397,7 +397,7 @@ CResult CMySqlDataStore::BeginTransaction() {
     std::lock_guard<std::mutex> lock(m_mutex);
 
     if (m_bInTransaction) {
-        return TESTMATE_ERROR(EErrorCode::kInvalidState,
+        return TESTMATE_FAILURE(EErrorCode::kInvalidState,
                             "Transaction already in progress");
     }
 
@@ -407,7 +407,7 @@ CResult CMySqlDataStore::BeginTransaction() {
     }
     return result;
 #else
-    return TESTMATE_ERROR(EErrorCode::kNotImplemented, "MySQL support not enabled");
+    return TESTMATE_FAILURE(EErrorCode::kNotImplemented, "MySQL support not enabled");
 #endif
 }
 
@@ -416,14 +416,14 @@ CResult CMySqlDataStore::CommitTransaction() {
     std::lock_guard<std::mutex> lock(m_mutex);
 
     if (!m_bInTransaction) {
-        return TESTMATE_ERROR(EErrorCode::kInvalidState, "No transaction in progress");
+        return TESTMATE_FAILURE(EErrorCode::kInvalidState, "No transaction in progress");
     }
 
     auto result = ExecuteQuery("COMMIT");
     m_bInTransaction = false;
     return result;
 #else
-    return TESTMATE_ERROR(EErrorCode::kNotImplemented, "MySQL support not enabled");
+    return TESTMATE_FAILURE(EErrorCode::kNotImplemented, "MySQL support not enabled");
 #endif
 }
 
@@ -432,14 +432,14 @@ CResult CMySqlDataStore::RollbackTransaction() {
     std::lock_guard<std::mutex> lock(m_mutex);
 
     if (!m_bInTransaction) {
-        return TESTMATE_ERROR(EErrorCode::kInvalidState, "No transaction in progress");
+        return TESTMATE_FAILURE(EErrorCode::kInvalidState, "No transaction in progress");
     }
 
     auto result = ExecuteQuery("ROLLBACK");
     m_bInTransaction = false;
     return result;
 #else
-    return TESTMATE_ERROR(EErrorCode::kNotImplemented, "MySQL support not enabled");
+    return TESTMATE_FAILURE(EErrorCode::kNotImplemented, "MySQL support not enabled");
 #endif
 }
 
@@ -449,12 +449,12 @@ CResult CMySqlDataStore::RollbackTransaction() {
 
 CResult CMySqlDataStore::InitializeSchema() {
 #ifndef TESTMATE_MYSQL_SUPPORT
-    return TESTMATE_ERROR(EErrorCode::kNotImplemented, "MySQL support not enabled");
+    return TESTMATE_FAILURE(EErrorCode::kNotImplemented, "MySQL support not enabled");
 #else
     std::lock_guard<std::mutex> lock(m_mutex);
 
     if (!CheckConnection()) {
-        return TESTMATE_ERROR(EErrorCode::kNotConnected, "Not connected to database");
+        return TESTMATE_FAILURE(EErrorCode::kNotConnected, "Not connected to database");
     }
 
     // Create tables (MySQL/InnoDB engine)
@@ -544,7 +544,7 @@ CResult CMySqlDataStore::OptimizeTable(const TString& in_strTableName) {
     std::lock_guard<std::mutex> lock(m_mutex);
     return ExecuteQuery("OPTIMIZE TABLE " + in_strTableName);
 #else
-    return TESTMATE_ERROR(EErrorCode::kNotImplemented, "MySQL support not enabled");
+    return TESTMATE_FAILURE(EErrorCode::kNotImplemented, "MySQL support not enabled");
 #endif
 }
 
@@ -553,7 +553,7 @@ CResult CMySqlDataStore::AnalyzeTable(const TString& in_strTableName) {
     std::lock_guard<std::mutex> lock(m_mutex);
     return ExecuteQuery("ANALYZE TABLE " + in_strTableName);
 #else
-    return TESTMATE_ERROR(EErrorCode::kNotImplemented, "MySQL support not enabled");
+    return TESTMATE_FAILURE(EErrorCode::kNotImplemented, "MySQL support not enabled");
 #endif
 }
 
@@ -562,7 +562,7 @@ CResult CMySqlDataStore::RepairTable(const TString& in_strTableName) {
     std::lock_guard<std::mutex> lock(m_mutex);
     return ExecuteQuery("REPAIR TABLE " + in_strTableName);
 #else
-    return TESTMATE_ERROR(EErrorCode::kNotImplemented, "MySQL support not enabled");
+    return TESTMATE_FAILURE(EErrorCode::kNotImplemented, "MySQL support not enabled");
 #endif
 }
 
@@ -571,7 +571,7 @@ CResult CMySqlDataStore::CheckTable(const TString& in_strTableName) {
     std::lock_guard<std::mutex> lock(m_mutex);
     return ExecuteQuery("CHECK TABLE " + in_strTableName);
 #else
-    return TESTMATE_ERROR(EErrorCode::kNotImplemented, "MySQL support not enabled");
+    return TESTMATE_FAILURE(EErrorCode::kNotImplemented, "MySQL support not enabled");
 #endif
 }
 
@@ -610,13 +610,13 @@ CResult CMySqlDataStore::ExecuteQuery(const TString& in_strQuery) {
 
     if (result != 0) {
         TString error = mysql_error(m_pConnection);
-        return TESTMATE_ERROR(EErrorCode::kDatabaseQueryFailed,
+        return TESTMATE_FAILURE(EErrorCode::kDatabaseQueryFailed,
                             "Query failed: " + error);
     }
 
     return TESTMATE_SUCCESS();
 #else
-    return TESTMATE_ERROR(EErrorCode::kNotImplemented, "MySQL support not enabled");
+    return TESTMATE_FAILURE(EErrorCode::kNotImplemented, "MySQL support not enabled");
 #endif
 }
 
@@ -627,7 +627,7 @@ CResult CMySqlDataStore::ExecuteQueryWithResult(const TString& in_strQuery,
 
     if (mysql_query(m_pConnection, in_strQuery.c_str()) != 0) {
         TString error = mysql_error(m_pConnection);
-        return TESTMATE_ERROR(EErrorCode::kDatabaseQueryFailed,
+        return TESTMATE_FAILURE(EErrorCode::kDatabaseQueryFailed,
                             "Query failed: " + error);
     }
 
@@ -638,13 +638,13 @@ CResult CMySqlDataStore::ExecuteQueryWithResult(const TString& in_strQuery,
     m_totalQueryTimeMs += duration.count() / 1000.0;
 
     if (!*out_pResult) {
-        return TESTMATE_ERROR(EErrorCode::kDatabaseQueryFailed,
+        return TESTMATE_FAILURE(EErrorCode::kDatabaseQueryFailed,
                             "Failed to get result set");
     }
 
     return TESTMATE_SUCCESS();
 #else
-    return TESTMATE_ERROR(EErrorCode::kNotImplemented, "MySQL support not enabled");
+    return TESTMATE_FAILURE(EErrorCode::kNotImplemented, "MySQL support not enabled");
 #endif
 }
 
@@ -667,7 +667,7 @@ CResult CMySqlDataStore::ParseTestData(MYSQL_RES* in_pResult,
 #ifdef TESTMATE_MYSQL_SUPPORT
     MYSQL_ROW row = mysql_fetch_row(in_pResult);
     if (!row) {
-        return TESTMATE_ERROR(EErrorCode::kNotFound, "No data to parse");
+        return TESTMATE_FAILURE(EErrorCode::kNotFound, "No data to parse");
     }
 
     // Parse row data (column order from CREATE TABLE)
@@ -682,7 +682,7 @@ CResult CMySqlDataStore::ParseTestData(MYSQL_RES* in_pResult,
 
     return TESTMATE_SUCCESS();
 #else
-    return TESTMATE_ERROR(EErrorCode::kNotImplemented, "MySQL support not enabled");
+    return TESTMATE_FAILURE(EErrorCode::kNotImplemented, "MySQL support not enabled");
 #endif
 }
 
@@ -707,7 +707,7 @@ CResult CMySqlDataStore::Reconnect() {
     Close();
     return Open(m_config);
 #else
-    return TESTMATE_ERROR(EErrorCode::kNotImplemented, "MySQL support not enabled");
+    return TESTMATE_FAILURE(EErrorCode::kNotImplemented, "MySQL support not enabled");
 #endif
 }
 

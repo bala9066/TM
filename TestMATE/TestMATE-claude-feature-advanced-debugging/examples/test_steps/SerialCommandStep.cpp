@@ -44,7 +44,7 @@ CResult CSerialCommandStep::Execute(SStepResult& out_result) {
         out_result.verdict = ETestVerdict::kError;
         out_result.message = "Missing port parameter";
         out_result.endTime = std::chrono::steady_clock::now();
-        return TESTMATE_ERROR(EErrorCode::kInvalidParameter, "Missing port");
+        return TESTMATE_FAILURE(EErrorCode::kInvalidParameter, "Missing port");
     }
     m_strPort = portParam.value();
 
@@ -53,13 +53,18 @@ CResult CSerialCommandStep::Execute(SStepResult& out_result) {
         out_result.verdict = ETestVerdict::kError;
         out_result.message = "Missing command parameter";
         out_result.endTime = std::chrono::steady_clock::now();
-        return TESTMATE_ERROR(EErrorCode::kInvalidParameter, "Missing command");
+        return TESTMATE_FAILURE(EErrorCode::kInvalidParameter, "Missing command");
     }
     m_strCommand = cmdParam.value();
 
     // Create serial connection
-    CSerialConnection serial;
-    auto connectResult = serial.Connect(m_strPort, m_baudRate);
+    SSerialConfig serialConfig;
+    serialConfig.portName = m_strPort;
+    serialConfig.baudRate = m_baudRate;
+    serialConfig.timeoutMs = m_timeoutMs;
+    CSerialConnection serial(serialConfig);
+
+    auto connectResult = serial.Open();
     if (!connectResult.IsSuccess()) {
         out_result.verdict = ETestVerdict::kError;
         out_result.message = "Failed to connect to " + m_strPort;
@@ -68,9 +73,9 @@ CResult CSerialCommandStep::Execute(SStepResult& out_result) {
     }
 
     // Send command
-    auto sendResult = serial.Send(m_strCommand + m_strTerminator);
+    auto sendResult = serial.Write(m_strCommand + m_strTerminator);
     if (!sendResult.IsSuccess()) {
-        serial.Disconnect();
+        serial.Close();
         out_result.verdict = ETestVerdict::kError;
         out_result.message = "Failed to send command";
         out_result.endTime = std::chrono::steady_clock::now();
@@ -79,13 +84,13 @@ CResult CSerialCommandStep::Execute(SStepResult& out_result) {
 
     // Read response if expected
     if (m_bExpectResponse) {
-        auto receiveResult = serial.Receive(m_strResponse, m_timeoutMs);
+        auto receiveResult = serial.Read(m_strResponse, m_timeoutMs);
         if (receiveResult.IsSuccess()) {
             out_result.measurements["response"] = m_strResponse;
         }
     }
 
-    serial.Disconnect();
+    serial.Close();
 
     out_result.verdict = ETestVerdict::kPass;
     out_result.message = "Command sent successfully";

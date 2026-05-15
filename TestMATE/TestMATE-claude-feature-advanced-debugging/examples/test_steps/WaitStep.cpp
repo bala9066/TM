@@ -55,7 +55,7 @@ CResult CWaitStep::Execute(SStepResult& out_result) {
             out_result.endTime = std::chrono::steady_clock::now();
             out_result.durationMs = std::chrono::duration_cast<std::chrono::milliseconds>(
                 out_result.endTime - out_result.startTime).count();
-            return TESTMATE_ERROR(EErrorCode::kInvalidParameter, "Invalid duration_ms");
+            return TESTMATE_FAILURE(EErrorCode::kInvalidParameter, "Invalid duration_ms");
         }
     }
 
@@ -77,7 +77,7 @@ CResult CWaitStep::Execute(SStepResult& out_result) {
             out_result.endTime = std::chrono::steady_clock::now();
             out_result.durationMs = std::chrono::duration_cast<std::chrono::milliseconds>(
                 out_result.endTime - out_result.startTime).count();
-            return TESTMATE_ERROR(EErrorCode::kAborted, "Wait step aborted");
+            return TESTMATE_FAILURE(EErrorCode::kStepAborted, "Wait step aborted");
         }
 
         // Wait for shorter of: remaining time or abort check interval

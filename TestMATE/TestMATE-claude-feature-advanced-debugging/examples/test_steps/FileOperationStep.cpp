@@ -46,7 +46,7 @@ CResult CFileOperationStep::Execute(SStepResult& out_result) {
         out_result.verdict = ETestVerdict::kError;
         out_result.message = "Missing operation parameter";
         out_result.endTime = std::chrono::steady_clock::now();
-        return TESTMATE_ERROR(EErrorCode::kInvalidParameter, "Missing operation");
+        return TESTMATE_FAILURE(EErrorCode::kInvalidParameter, "Missing operation");
     }
 
     TString op = opParam.value();
@@ -59,7 +59,7 @@ CResult CFileOperationStep::Execute(SStepResult& out_result) {
         out_result.verdict = ETestVerdict::kError;
         out_result.message = "Unknown operation: " + op;
         out_result.endTime = std::chrono::steady_clock::now();
-        return TESTMATE_ERROR(EErrorCode::kInvalidParameter, "Unknown operation");
+        return TESTMATE_FAILURE(EErrorCode::kInvalidParameter, "Unknown operation");
     }
 
     // Get file path
@@ -68,7 +68,7 @@ CResult CFileOperationStep::Execute(SStepResult& out_result) {
         out_result.verdict = ETestVerdict::kError;
         out_result.message = "Missing file_path parameter";
         out_result.endTime = std::chrono::steady_clock::now();
-        return TESTMATE_ERROR(EErrorCode::kInvalidParameter, "Missing file_path");
+        return TESTMATE_FAILURE(EErrorCode::kInvalidParameter, "Missing file_path");
     }
     m_strFilePath = pathParam.value();
 
@@ -97,7 +97,7 @@ CResult CFileOperationStep::Execute(SStepResult& out_result) {
             result = PerformExists(out_result);
             break;
         default:
-            result = TESTMATE_ERROR(EErrorCode::kInvalidParameter, "Unknown operation");
+            result = TESTMATE_FAILURE(EErrorCode::kInvalidParameter, "Unknown operation");
     }
 
     out_result.endTime = std::chrono::steady_clock::now();
@@ -126,7 +126,7 @@ CResult CFileOperationStep::PerformRead(SStepResult& out_result) {
     if (!file.is_open()) {
         out_result.verdict = ETestVerdict::kFail;
         out_result.message = "Failed to open file for reading: " + m_strFilePath;
-        return TESTMATE_ERROR(EErrorCode::kFileNotFound, "File not found");
+        return TESTMATE_FAILURE(EErrorCode::kFileNotFound, "File not found");
     }
 
     std::stringstream buffer;
@@ -147,7 +147,7 @@ CResult CFileOperationStep::PerformWrite(SStepResult& out_result) {
     if (!file.is_open()) {
         out_result.verdict = ETestVerdict::kFail;
         out_result.message = "Failed to open file for writing: " + m_strFilePath;
-        return TESTMATE_ERROR(EErrorCode::kFileWriteFailed, "Write failed");
+        return TESTMATE_FAILURE(EErrorCode::kFileWriteFailed, "Write failed");
     }
 
     file << m_strContent;
@@ -165,7 +165,7 @@ CResult CFileOperationStep::PerformAppend(SStepResult& out_result) {
     if (!file.is_open()) {
         out_result.verdict = ETestVerdict::kFail;
         out_result.message = "Failed to open file for appending: " + m_strFilePath;
-        return TESTMATE_ERROR(EErrorCode::kFileWriteFailed, "Append failed");
+        return TESTMATE_FAILURE(EErrorCode::kFileWriteFailed, "Append failed");
     }
 
     file << m_strContent;
@@ -187,12 +187,12 @@ CResult CFileOperationStep::PerformDelete(SStepResult& out_result) {
         } else {
             out_result.verdict = ETestVerdict::kFail;
             out_result.message = "File not found or already deleted";
-            return TESTMATE_ERROR(EErrorCode::kFileNotFound, "File not found");
+            return TESTMATE_FAILURE(EErrorCode::kFileNotFound, "File not found");
         }
     } catch (const std::exception& e) {
         out_result.verdict = ETestVerdict::kError;
         out_result.message = TString("Delete failed: ") + e.what();
-        return TESTMATE_ERROR(EErrorCode::kFileWriteFailed, e.what());
+        return TESTMATE_FAILURE(EErrorCode::kFileWriteFailed, e.what());
     }
 }
 
