@@ -150,12 +150,21 @@ public:
         return dynamic_cast<T*>(pPlugin);
     }
 
+    // Plugin ABI version this host build is compatible with. A loaded
+    // library whose GetPluginApiVersion() differs is rejected.
+    static constexpr const char* kHostPluginApiVersion = "1.0";
+
 private:
     CPluginManager() = default;
     ~CPluginManager();
 
     CResult LoadLibrary(const TString& in_strPath, void*& out_hLibrary);
     void UnloadLibrary(void* in_hLibrary);
+
+    // Canonicalizes the path and rejects unsafe plugin files (non-regular
+    // files, symlinks, and world-writable files/directories that an
+    // attacker could replace to gain in-process code execution).
+    CResult ValidatePluginFile(const TString& in_strPath, TString& out_strCanonicalPath) const;
 
     mutable std::mutex m_mutex;
     std::map<TString, SLoadedPlugin> m_mapPlugins;

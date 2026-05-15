@@ -14,6 +14,26 @@
 
 namespace TestMATE {
 
+namespace {
+// Escapes text for safe inclusion in HTML element content and double-quoted
+// attributes; prevents stored XSS from operator/lot/step fields.
+TString EscapeHtml(const TString& in_text) {
+    TString out;
+    out.reserve(in_text.size());
+    for (char c : in_text) {
+        switch (c) {
+            case '&':  out += "&amp;";  break;
+            case '<':  out += "&lt;";   break;
+            case '>':  out += "&gt;";   break;
+            case '"':  out += "&quot;"; break;
+            case '\'': out += "&#39;";  break;
+            default:   out += c;        break;
+        }
+    }
+    return out;
+}
+} // namespace
+
 CResult CHtmlReportGenerator::Generate(const STestReport& in_report, const TString& in_strOutputPath) {
     TString content;
     auto result = GenerateToString(in_report, content);
@@ -37,7 +57,7 @@ CResult CHtmlReportGenerator::GenerateToString(const STestReport& in_report, TSt
     oss << "<!DOCTYPE html>\n<html lang=\"en\">\n<head>\n";
     oss << "    <meta charset=\"UTF-8\">\n";
     oss << "    <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">\n";
-    oss << "    <title>" << m_strTitle << "</title>\n";
+    oss << "    <title>" << EscapeHtml(m_strTitle) << "</title>\n";
     oss << GenerateStyles();
     oss << "</head>\n<body>\n";
     oss << GenerateHeader();
@@ -82,10 +102,10 @@ TString CHtmlReportGenerator::GenerateHeader() {
     oss << "<div class=\"container\">\n";
     oss << "<div class=\"header\">\n";
     if (!m_strLogoPath.empty()) {
-        oss << "    <img src=\"" << m_strLogoPath << "\" alt=\"Logo\" style=\"height:50px;margin-bottom:10px;\">\n";
+        oss << "    <img src=\"" << EscapeHtml(m_strLogoPath) << "\" alt=\"Logo\" style=\"height:50px;margin-bottom:10px;\">\n";
     }
-    oss << "    <h1>" << m_strTitle << "</h1>\n";
-    oss << "    <p>" << m_strCompanyName << "</p>\n";
+    oss << "    <h1>" << EscapeHtml(m_strTitle) << "</h1>\n";
+    oss << "    <p>" << EscapeHtml(m_strCompanyName) << "</p>\n";
     oss << "</div>\n";
     return oss.str();
 }
@@ -104,11 +124,11 @@ TString CHtmlReportGenerator::GenerateSummarySection(const STestReport& in_repor
     oss << "</div>\n";
 
     oss << "<div style=\"background:white;padding:20px;border-bottom:1px solid #ddd;\">\n";
-    oss << "    <p><strong>Report ID:</strong> " << in_report.reportId << "</p>\n";
-    oss << "    <p><strong>Sequence:</strong> " << in_report.sequenceName << "</p>\n";
-    oss << "    <p><strong>Operator:</strong> " << in_report.operatorName << "</p>\n";
-    oss << "    <p><strong>Lot ID:</strong> " << in_report.lotId << "</p>\n";
-    oss << "    <p><strong>Serial Number:</strong> " << in_report.serialNumber << "</p>\n";
+    oss << "    <p><strong>Report ID:</strong> " << EscapeHtml(in_report.reportId) << "</p>\n";
+    oss << "    <p><strong>Sequence:</strong> " << EscapeHtml(in_report.sequenceName) << "</p>\n";
+    oss << "    <p><strong>Operator:</strong> " << EscapeHtml(in_report.operatorName) << "</p>\n";
+    oss << "    <p><strong>Lot ID:</strong> " << EscapeHtml(in_report.lotId) << "</p>\n";
+    oss << "    <p><strong>Serial Number:</strong> " << EscapeHtml(in_report.serialNumber) << "</p>\n";
     oss << "</div>\n";
 
     return oss.str();
@@ -122,8 +142,8 @@ TString CHtmlReportGenerator::GenerateResultsTable(const STestReport& in_report)
 
     for (const auto& result : in_report.results) {
         oss << "    <tr>\n";
-        oss << "        <td>" << result.stepId << "</td>\n";
-        oss << "        <td>" << result.stepName << "</td>\n";
+        oss << "        <td>" << EscapeHtml(result.stepId) << "</td>\n";
+        oss << "        <td>" << EscapeHtml(result.stepName) << "</td>\n";
         oss << "        <td><span class=\"verdict-" << VerdictToClass(result.verdict) << "\">" << VerdictToString(result.verdict) << "</span></td>\n";
         oss << "        <td>" << result.durationMs << "</td>\n";
         oss << "    </tr>\n";

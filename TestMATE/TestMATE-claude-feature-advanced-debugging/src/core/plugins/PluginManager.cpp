@@ -16,6 +16,8 @@
 #endif
 
 #include <filesystem>
+#include <exception>
+#include <system_error>
 
 namespace TestMATE {
 
@@ -31,15 +33,18 @@ CPluginManager::~CPluginManager() {
 CResult CPluginManager::LoadPlugin(const TString& in_strPath) {
     std::lock_guard<std::mutex> lock(m_mutex);
 
-    // Check if file exists
-    if (!std::filesystem::exists(in_strPath)) {
-        return TESTMATE_FAILURE(EErrorCode::kFileNotFound,
-                                "Plugin file not found: " + in_strPath);
+    // Validate and canonicalize the path before touching the file: this
+    // resolves '..', rejects symlinks, and refuses world-writable plugin
+    // files/directories that an attacker could swap for malicious code.
+    TString canonicalPath;
+    auto result = ValidatePluginFile(in_strPath, canonicalPath);
+    if (result.IsFailure()) {
+        return result;
     }
 
     // Load the library
     void* hLibrary = nullptr;
-    auto result = LoadLibrary(in_strPath, hLibrary);
+    result = LoadLibrary(canonicalPath, hLibrary);
     if (result.IsFailure()) {
         return result;
     }
@@ -66,16 +71,60 @@ CResult CPluginManager::LoadPlugin(const TString& in_strPath) {
                                 "Plugin missing required exports");
     }
 
-    // Create plugin instance
-    IPlugin* pPlugin = createFunc();
-    if (!pPlugin) {
+    // Verify the plugin ABI version matches this host build. Executing an
+    // ABI-incompatible plugin is undefined behaviour.
+    using FPluginVersionFunc = const char* (*)();
+    FPluginVersionFunc versionFunc = nullptr;
+#ifdef _WIN32
+    versionFunc = reinterpret_cast<FPluginVersionFunc>(
+        GetProcAddress(static_cast<HMODULE>(hLibrary), "GetPluginApiVersion"));
+#else
+    versionFunc = reinterpret_cast<FPluginVersionFunc>(
+        dlsym(hLibrary, "GetPluginApiVersion"));
+#endif
+    if (!versionFunc) {
         UnloadLibrary(hLibrary);
-        return TESTMATE_FAILURE(EErrorCode::kPluginInitFailed,
-                                "Failed to create plugin instance");
+        return TESTMATE_FAILURE(EErrorCode::kPluginInvalid,
+                                "Plugin does not export GetPluginApiVersion");
+    }
+    {
+        const char* pluginApi = nullptr;
+        try {
+            pluginApi = versionFunc();
+        } catch (...) {
+            pluginApi = nullptr;
+        }
+        if (!pluginApi || TString(pluginApi) != kHostPluginApiVersion) {
+            UnloadLibrary(hLibrary);
+            return TESTMATE_FAILURE(EErrorCode::kPluginInvalid,
+                                    TString("Plugin ABI version mismatch (host expects ") +
+                                    kHostPluginApiVersion + ")");
+        }
     }
 
-    // Get plugin info
-    SPluginInfo info = pPlugin->GetInfo();
+    // Create plugin instance. Plugin code is untrusted: a throwing
+    // constructor or GetInfo() must not escape and leak the library.
+    IPlugin* pPlugin = nullptr;
+    SPluginInfo info;
+    try {
+        pPlugin = createFunc();
+        if (!pPlugin) {
+            UnloadLibrary(hLibrary);
+            return TESTMATE_FAILURE(EErrorCode::kPluginInitFailed,
+                                    "Failed to create plugin instance");
+        }
+        info = pPlugin->GetInfo();
+    } catch (const std::exception& e) {
+        if (pPlugin) { destroyFunc(pPlugin); }
+        UnloadLibrary(hLibrary);
+        return TESTMATE_FAILURE(EErrorCode::kPluginInitFailed,
+                                TString("Plugin threw during creation: ") + e.what());
+    } catch (...) {
+        if (pPlugin) { destroyFunc(pPlugin); }
+        UnloadLibrary(hLibrary);
+        return TESTMATE_FAILURE(EErrorCode::kPluginInitFailed,
+                                "Plugin threw an unknown exception during creation");
+    }
 
     // Check if already loaded
     if (m_mapPlugins.count(info.id) > 0) {
@@ -85,8 +134,20 @@ CResult CPluginManager::LoadPlugin(const TString& in_strPath) {
                                 "Plugin already loaded: " + info.id);
     }
 
-    // Initialize plugin
-    result = pPlugin->Initialize();
+    // Initialize plugin (untrusted code — guard against exceptions).
+    try {
+        result = pPlugin->Initialize();
+    } catch (const std::exception& e) {
+        destroyFunc(pPlugin);
+        UnloadLibrary(hLibrary);
+        return TESTMATE_FAILURE(EErrorCode::kPluginInitFailed,
+                                TString("Plugin threw during Initialize(): ") + e.what());
+    } catch (...) {
+        destroyFunc(pPlugin);
+        UnloadLibrary(hLibrary);
+        return TESTMATE_FAILURE(EErrorCode::kPluginInitFailed,
+                                "Plugin threw an unknown exception during Initialize()");
+    }
     if (result.IsFailure()) {
         destroyFunc(pPlugin);
         UnloadLibrary(hLibrary);
@@ -99,7 +160,7 @@ CResult CPluginManager::LoadPlugin(const TString& in_strPath) {
     loaded.pPlugin = pPlugin;
     loaded.hLibrary = hLibrary;
     loaded.destroyFunc = destroyFunc;
-    loaded.path = in_strPath;
+    loaded.path = canonicalPath;
     loaded.state = EPluginState::kInitialized;
 
     m_mapPlugins[info.id] = loaded;
@@ -176,7 +237,11 @@ TUInt32 CPluginManager::ScanDirectory(const TString& in_strPath) {
     const TString extension = ".so";
 #endif
 
-    for (const auto& entry : std::filesystem::directory_iterator(in_strPath)) {
+    std::error_code ec;
+    for (const auto& entry : std::filesystem::directory_iterator(in_strPath, ec)) {
+        if (ec) {
+            break;
+        }
         if (entry.is_regular_file() &&
             entry.path().extension() == extension) {
 
@@ -188,6 +253,52 @@ TUInt32 CPluginManager::ScanDirectory(const TString& in_strPath) {
     }
 
     return count;
+}
+
+CResult CPluginManager::ValidatePluginFile(const TString& in_strPath,
+                                           TString& out_strCanonicalPath) const {
+    std::error_code ec;
+
+    // Reject symlinks: the inspected metadata may not match the real target.
+    auto symStatus = std::filesystem::symlink_status(in_strPath, ec);
+    if (ec) {
+        return TESTMATE_FAILURE(EErrorCode::kFileNotFound,
+                                "Cannot stat plugin file: " + in_strPath);
+    }
+    if (std::filesystem::is_symlink(symStatus)) {
+        return TESTMATE_FAILURE(EErrorCode::kPluginInvalid,
+                                "Plugin path is a symlink (rejected): " + in_strPath);
+    }
+
+    // Resolve '..' and relative components to an absolute path.
+    auto canonical = std::filesystem::weakly_canonical(in_strPath, ec);
+    if (ec) {
+        return TESTMATE_FAILURE(EErrorCode::kFileNotFound,
+                                "Cannot resolve plugin path: " + in_strPath);
+    }
+
+    auto status = std::filesystem::status(canonical, ec);
+    if (ec || !std::filesystem::is_regular_file(status)) {
+        return TESTMATE_FAILURE(EErrorCode::kPluginInvalid,
+                                "Plugin path is not a regular file: " + in_strPath);
+    }
+
+    // A world-writable plugin file or directory is an arbitrary-code-execution
+    // vector: anyone could replace it before it is dlopen'd.
+    using std::filesystem::perms;
+    if ((status.permissions() & perms::others_write) != perms::none) {
+        return TESTMATE_FAILURE(EErrorCode::kPluginLoadFailed,
+                                "Refusing to load world-writable plugin: " + canonical.string());
+    }
+    auto dirStatus = std::filesystem::status(canonical.parent_path(), ec);
+    if (!ec && (dirStatus.permissions() & perms::others_write) != perms::none) {
+        return TESTMATE_FAILURE(EErrorCode::kPluginLoadFailed,
+                                "Refusing to load plugin from world-writable directory: " +
+                                canonical.string());
+    }
+
+    out_strCanonicalPath = canonical.string();
+    return TESTMATE_SUCCESS();
 }
 
 void CPluginManager::AddSearchPath(const TString& in_strPath) {

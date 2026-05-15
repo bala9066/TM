@@ -154,7 +154,8 @@ CResult CSqliteDataStore::GetTestData(TUInt64 in_id, STestDataRecord& out_record
 
     if (sqlite3_step(stmt) == SQLITE_ROW) {
         out_record.recordId = static_cast<TUInt64>(sqlite3_column_int64(stmt, 0));
-        out_record.sequenceName = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 1));
+        const unsigned char* seqNameText = sqlite3_column_text(stmt, 1);
+        out_record.sequenceName = seqNameText ? reinterpret_cast<const char*>(seqNameText) : "";
         const unsigned char* lotIdText = sqlite3_column_text(stmt, 2);
         out_record.lotId = lotIdText ? reinterpret_cast<const char*>(lotIdText) : "";
         const unsigned char* deviceIdText = sqlite3_column_text(stmt, 3);
@@ -171,36 +172,54 @@ CResult CSqliteDataStore::GetTestData(TUInt64 in_id, STestDataRecord& out_record
 }
 
 CResult CSqliteDataStore::DeleteTestData(TUInt64 in_id) {
+    std::lock_guard<std::mutex> lock(m_dbMutex);
+
     if (!m_bConnected) {
         return TESTMATE_FAILURE(EErrorCode::kConnectionFailed, "Not connected");
     }
 
-    std::ostringstream sql;
-    sql << "DELETE FROM test_data WHERE id = " << in_id;
+    const char* sql = "DELETE FROM test_data WHERE id = ?";
+    sqlite3* db = static_cast<sqlite3*>(m_pDatabase);
+    sqlite3_stmt* stmt = nullptr;
 
-    auto result = ExecuteSQL(sql.str());
-    if (result.IsSuccess() && m_recordCount > 0) {
+    if (sqlite3_prepare_v2(db, sql, -1, &stmt, nullptr) != SQLITE_OK) {
+        return TESTMATE_FAILURE(EErrorCode::kDatabaseQueryFailed, "Failed to prepare statement");
+    }
+
+    sqlite3_bind_int64(stmt, 1, static_cast<sqlite3_int64>(in_id));
+    int rc = sqlite3_step(stmt);
+    sqlite3_finalize(stmt);
+
+    if (rc != SQLITE_DONE) {
+        return TESTMATE_FAILURE(EErrorCode::kDatabaseWriteFailed, "Failed to delete record");
+    }
+
+    if (m_recordCount > 0) {
         --m_recordCount;
     }
-    return result;
+    return CResult::Success();
 }
 
 CResult CSqliteDataStore::QueryTestData(const SQueryFilter& in_filter, TVector<STestDataRecord>& out_records) {
+    std::lock_guard<std::mutex> lock(m_dbMutex);
+
     if (!m_bConnected) {
         return TESTMATE_FAILURE(EErrorCode::kConnectionFailed, "Not connected");
     }
 
+    // Build with placeholders only; all user-supplied values are bound, never
+    // concatenated, to prevent SQL injection.
     std::ostringstream sql;
     sql << "SELECT id, sequence_name, lot_id, device_id, verdict, duration_ms FROM test_data WHERE 1=1";
 
     if (!in_filter.lotId.empty()) {
-        sql << " AND lot_id = '" << in_filter.lotId << "'";
+        sql << " AND lot_id = ?";
     }
     if (!in_filter.sequenceName.empty()) {
-        sql << " AND sequence_name = '" << in_filter.sequenceName << "'";
+        sql << " AND sequence_name = ?";
     }
     if (in_filter.limit > 0) {
-        sql << " LIMIT " << in_filter.limit;
+        sql << " LIMIT ?";
     }
 
     sqlite3* db = static_cast<sqlite3*>(m_pDatabase);
@@ -210,11 +229,23 @@ CResult CSqliteDataStore::QueryTestData(const SQueryFilter& in_filter, TVector<S
         return TESTMATE_FAILURE(EErrorCode::kDatabaseQueryFailed, "Failed to prepare query");
     }
 
+    int bindIndex = 1;
+    if (!in_filter.lotId.empty()) {
+        sqlite3_bind_text(stmt, bindIndex++, in_filter.lotId.c_str(), -1, SQLITE_TRANSIENT);
+    }
+    if (!in_filter.sequenceName.empty()) {
+        sqlite3_bind_text(stmt, bindIndex++, in_filter.sequenceName.c_str(), -1, SQLITE_TRANSIENT);
+    }
+    if (in_filter.limit > 0) {
+        sqlite3_bind_int64(stmt, bindIndex++, static_cast<sqlite3_int64>(in_filter.limit));
+    }
+
     out_records.clear();
     while (sqlite3_step(stmt) == SQLITE_ROW) {
         STestDataRecord record;
         record.recordId = static_cast<TUInt64>(sqlite3_column_int64(stmt, 0));
-        record.sequenceName = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 1));
+        const unsigned char* seqNameText = sqlite3_column_text(stmt, 1);
+        record.sequenceName = seqNameText ? reinterpret_cast<const char*>(seqNameText) : "";
         const unsigned char* lotIdText = sqlite3_column_text(stmt, 2);
         record.lotId = lotIdText ? reinterpret_cast<const char*>(lotIdText) : "";
         const unsigned char* deviceIdText = sqlite3_column_text(stmt, 3);
