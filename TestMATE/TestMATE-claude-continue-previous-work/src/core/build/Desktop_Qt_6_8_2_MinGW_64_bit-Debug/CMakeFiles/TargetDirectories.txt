@@ -1,3 +1,0 @@
-D:/Sathishkumar_K/Qt/Development/TestMATE/TestMATE-claude-continue-previous-work/src/core/build/Desktop_Qt_6_8_2_MinGW_64_bit-Debug/CMakeFiles/testmate_core.dir
-D:/Sathishkumar_K/Qt/Development/TestMATE/TestMATE-claude-continue-previous-work/src/core/build/Desktop_Qt_6_8_2_MinGW_64_bit-Debug/CMakeFiles/edit_cache.dir
-D:/Sathishkumar_K/Qt/Development/TestMATE/TestMATE-claude-continue-previous-work/src/core/build/Desktop_Qt_6_8_2_MinGW_64_bit-Debug/CMakeFiles/rebuild_cache.dir
