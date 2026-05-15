@@ -55,8 +55,8 @@ struct SStepResult {
     TString message;
     std::map<TString, TString> measurements;
     TInt64 durationMs{0};
-    TTimePoint startTime;
-    TTimePoint endTime;
+    TWallClock startTime;
+    TWallClock endTime;
 };
 
 /**************************************************************************

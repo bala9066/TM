@@ -108,8 +108,8 @@ public:
     CResult GetTestDataByLot(const TString& in_strLotId,
                             TVector<STestDataRecord>& out_records) override;
 
-    CResult GetTestDataByDateRange(const TTimePoint& in_start,
-                                   const TTimePoint& in_end,
+    CResult GetTestDataByDateRange(const TWallClock& in_start,
+                                   const TWallClock& in_end,
                                    TVector<STestDataRecord>& out_records) override;
 
     /**************************************************************************

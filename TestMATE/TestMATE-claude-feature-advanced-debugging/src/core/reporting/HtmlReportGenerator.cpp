@@ -181,12 +181,16 @@ TString CHtmlReportGenerator::VerdictToString(ETestVerdict in_verdict) {
     }
 }
 
-TString CHtmlReportGenerator::FormatTimestamp(const TTimePoint& /*in_tp*/) {
-    // Since TTimePoint uses steady_clock, we use current system time for display
-    auto now = std::chrono::system_clock::now();
-    auto time = std::chrono::system_clock::to_time_t(now);
+TString CHtmlReportGenerator::FormatTimestamp(const TWallClock& in_tp) {
+    auto time = std::chrono::system_clock::to_time_t(in_tp);
+    std::tm tmBuf{};
+#ifdef _WIN32
+    localtime_s(&tmBuf, &time);
+#else
+    localtime_r(&time, &tmBuf);
+#endif
     std::ostringstream oss;
-    oss << std::put_time(std::localtime(&time), "%Y-%m-%d %H:%M:%S");
+    oss << std::put_time(&tmBuf, "%Y-%m-%d %H:%M:%S");
     return oss.str();
 }
 

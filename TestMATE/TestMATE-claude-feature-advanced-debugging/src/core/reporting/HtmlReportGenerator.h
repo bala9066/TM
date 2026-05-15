@@ -38,7 +38,7 @@ private:
     TString GenerateFooter();
     TString VerdictToClass(ETestVerdict in_verdict);
     TString VerdictToString(ETestVerdict in_verdict);
-    TString FormatTimestamp(const TTimePoint& in_tp);
+    TString FormatTimestamp(const TWallClock& in_tp);
 
     TString m_strTitle{"Test Report"};
     TString m_strCompanyName{"TestMATE"};

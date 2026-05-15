@@ -37,8 +37,8 @@ struct STestResult {
     TString stepName;
     ETestVerdict verdict{ETestVerdict::kNone};
     TString message;
-    TTimePoint startTime;
-    TTimePoint endTime;
+    TWallClock startTime;
+    TWallClock endTime;
     TInt64 durationMs{0};
     std::map<TString, TString> measurements;
     std::map<TString, TString> parameters;
@@ -55,8 +55,8 @@ struct STestReport {
     TString lotId;
     TString serialNumber;
 
-    TTimePoint startTime;
-    TTimePoint endTime;
+    TWallClock startTime;
+    TWallClock endTime;
     TInt64 totalDurationMs{0};
 
     ETestVerdict overallVerdict{ETestVerdict::kNone};

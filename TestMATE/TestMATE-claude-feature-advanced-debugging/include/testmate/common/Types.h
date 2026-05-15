@@ -50,8 +50,16 @@ using TStringView = std::string_view;
 // Time Types
 //=============================================================================
 
+// Monotonic clock — for measuring elapsed time, timeouts and deadlines.
+// Never goes backwards, but has no relation to calendar time.
 using TClock = std::chrono::steady_clock;
 using TTimePoint = std::chrono::time_point<TClock>;
+using TMonotonicTime = TTimePoint;  // clearer synonym for new code
+
+// Wall-clock time — for "when did this happen": report/record timestamps,
+// sequence created/modified dates. Convertible to calendar time.
+using TWallClock = std::chrono::time_point<std::chrono::system_clock>;
+
 using TDuration = std::chrono::milliseconds;
 using TMicroseconds = std::chrono::microseconds;
 using TNanoseconds = std::chrono::nanoseconds;

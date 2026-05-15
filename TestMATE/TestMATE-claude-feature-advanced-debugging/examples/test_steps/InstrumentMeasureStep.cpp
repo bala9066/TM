@@ -64,14 +64,14 @@ CInstrumentMeasureStep::CInstrumentMeasureStep(const TString& in_strId,
 }
 
 CResult CInstrumentMeasureStep::Execute(SStepResult& out_result) {
-    out_result.startTime = std::chrono::steady_clock::now();
+    out_result.startTime = std::chrono::system_clock::now();
 
     // Get required parameters
     auto instParam = GetParameter("instrument_id");
     if (!instParam.has_value()) {
         out_result.verdict = ETestVerdict::kError;
         out_result.message = "Missing required 'instrument_id' parameter";
-        out_result.endTime = std::chrono::steady_clock::now();
+        out_result.endTime = std::chrono::system_clock::now();
         out_result.durationMs = std::chrono::duration_cast<std::chrono::milliseconds>(
             out_result.endTime - out_result.startTime).count();
         return TESTMATE_FAILURE(EErrorCode::kInvalidParameter, "Missing instrument_id");
@@ -82,7 +82,7 @@ CResult CInstrumentMeasureStep::Execute(SStepResult& out_result) {
     if (!cmdParam.has_value()) {
         out_result.verdict = ETestVerdict::kError;
         out_result.message = "Missing required 'command' parameter";
-        out_result.endTime = std::chrono::steady_clock::now();
+        out_result.endTime = std::chrono::system_clock::now();
         out_result.durationMs = std::chrono::duration_cast<std::chrono::milliseconds>(
             out_result.endTime - out_result.startTime).count();
         return TESTMATE_FAILURE(EErrorCode::kInvalidParameter, "Missing command");
@@ -119,7 +119,7 @@ CResult CInstrumentMeasureStep::Execute(SStepResult& out_result) {
     if (!pInstrument) {
         out_result.verdict = ETestVerdict::kError;
         out_result.message = "Instrument not found: " + m_strInstrumentId;
-        out_result.endTime = std::chrono::steady_clock::now();
+        out_result.endTime = std::chrono::system_clock::now();
         out_result.durationMs = std::chrono::duration_cast<std::chrono::milliseconds>(
             out_result.endTime - out_result.startTime).count();
         return TESTMATE_FAILURE(EErrorCode::kNotFound, "Instrument not found");
@@ -129,7 +129,7 @@ CResult CInstrumentMeasureStep::Execute(SStepResult& out_result) {
     if (!pInstrument->IsConnected()) {
         out_result.verdict = ETestVerdict::kError;
         out_result.message = "Instrument not connected: " + m_strInstrumentId;
-        out_result.endTime = std::chrono::steady_clock::now();
+        out_result.endTime = std::chrono::system_clock::now();
         out_result.durationMs = std::chrono::duration_cast<std::chrono::milliseconds>(
             out_result.endTime - out_result.startTime).count();
         return TESTMATE_FAILURE(EErrorCode::kConnectionFailed, "Instrument not connected");
@@ -140,7 +140,7 @@ CResult CInstrumentMeasureStep::Execute(SStepResult& out_result) {
     if (!queryResult.IsSuccess()) {
         out_result.verdict = ETestVerdict::kError;
         out_result.message = "Instrument query failed: " + queryResult.GetMessage();
-        out_result.endTime = std::chrono::steady_clock::now();
+        out_result.endTime = std::chrono::system_clock::now();
         out_result.durationMs = std::chrono::duration_cast<std::chrono::milliseconds>(
             out_result.endTime - out_result.startTime).count();
         return queryResult;
@@ -168,7 +168,7 @@ CResult CInstrumentMeasureStep::Execute(SStepResult& out_result) {
 
     out_result.verdict = ETestVerdict::kPass;
     out_result.message = "Measurement completed successfully";
-    out_result.endTime = std::chrono::steady_clock::now();
+    out_result.endTime = std::chrono::system_clock::now();
     out_result.durationMs = std::chrono::duration_cast<std::chrono::milliseconds>(
         out_result.endTime - out_result.startTime).count();
 

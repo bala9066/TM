@@ -42,7 +42,7 @@ CWaitStep::CWaitStep(const TString& in_strId,
 
 CResult CWaitStep::Execute(SStepResult& out_result) {
     ResetAbort();
-    out_result.startTime = std::chrono::steady_clock::now();
+    out_result.startTime = std::chrono::system_clock::now();
 
     // Update duration from parameter if set
     auto durationParam = GetParameter("duration_ms");
@@ -52,7 +52,7 @@ CResult CWaitStep::Execute(SStepResult& out_result) {
         } catch (...) {
             out_result.verdict = ETestVerdict::kError;
             out_result.message = "Invalid duration_ms parameter";
-            out_result.endTime = std::chrono::steady_clock::now();
+            out_result.endTime = std::chrono::system_clock::now();
             out_result.durationMs = std::chrono::duration_cast<std::chrono::milliseconds>(
                 out_result.endTime - out_result.startTime).count();
             return TESTMATE_FAILURE(EErrorCode::kInvalidParameter, "Invalid duration_ms");
@@ -74,7 +74,7 @@ CResult CWaitStep::Execute(SStepResult& out_result) {
         if (m_bAllowAbort && IsAborted()) {
             out_result.verdict = ETestVerdict::kAborted;
             out_result.message = "Wait aborted by user";
-            out_result.endTime = std::chrono::steady_clock::now();
+            out_result.endTime = std::chrono::system_clock::now();
             out_result.durationMs = std::chrono::duration_cast<std::chrono::milliseconds>(
                 out_result.endTime - out_result.startTime).count();
             return TESTMATE_FAILURE(EErrorCode::kStepAborted, "Wait step aborted");
@@ -95,7 +95,7 @@ CResult CWaitStep::Execute(SStepResult& out_result) {
     std::ostringstream oss;
     oss << "Waited " << m_durationMs << " ms";
     out_result.message = oss.str();
-    out_result.endTime = std::chrono::steady_clock::now();
+    out_result.endTime = std::chrono::system_clock::now();
     out_result.durationMs = std::chrono::duration_cast<std::chrono::milliseconds>(
         out_result.endTime - out_result.startTime).count();
 

@@ -55,14 +55,14 @@ CLimitCheckStep::CLimitCheckStep(const TString& in_strId,
 }
 
 CResult CLimitCheckStep::Execute(SStepResult& out_result) {
-    out_result.startTime = std::chrono::steady_clock::now();
+    out_result.startTime = std::chrono::system_clock::now();
 
     // Get value parameter (required)
     auto valueParam = GetParameter("value");
     if (!valueParam.has_value()) {
         out_result.verdict = ETestVerdict::kError;
         out_result.message = "Missing required 'value' parameter";
-        out_result.endTime = std::chrono::steady_clock::now();
+        out_result.endTime = std::chrono::system_clock::now();
         out_result.durationMs = std::chrono::duration_cast<std::chrono::milliseconds>(
             out_result.endTime - out_result.startTime).count();
         return TESTMATE_FAILURE(EErrorCode::kInvalidParameter, "Missing value parameter");
@@ -73,7 +73,7 @@ CResult CLimitCheckStep::Execute(SStepResult& out_result) {
     } catch (...) {
         out_result.verdict = ETestVerdict::kError;
         out_result.message = "Invalid value parameter format";
-        out_result.endTime = std::chrono::steady_clock::now();
+        out_result.endTime = std::chrono::system_clock::now();
         out_result.durationMs = std::chrono::duration_cast<std::chrono::milliseconds>(
             out_result.endTime - out_result.startTime).count();
         return TESTMATE_FAILURE(EErrorCode::kInvalidParameter, "Invalid value");
@@ -90,7 +90,7 @@ CResult CLimitCheckStep::Execute(SStepResult& out_result) {
         } catch (...) {
             out_result.verdict = ETestVerdict::kError;
             out_result.message = "Invalid limit_min parameter";
-            out_result.endTime = std::chrono::steady_clock::now();
+            out_result.endTime = std::chrono::system_clock::now();
             out_result.durationMs = std::chrono::duration_cast<std::chrono::milliseconds>(
                 out_result.endTime - out_result.startTime).count();
             return TESTMATE_FAILURE(EErrorCode::kInvalidParameter, "Invalid limit_min");
@@ -104,7 +104,7 @@ CResult CLimitCheckStep::Execute(SStepResult& out_result) {
         } catch (...) {
             out_result.verdict = ETestVerdict::kError;
             out_result.message = "Invalid limit_max parameter";
-            out_result.endTime = std::chrono::steady_clock::now();
+            out_result.endTime = std::chrono::system_clock::now();
             out_result.durationMs = std::chrono::duration_cast<std::chrono::milliseconds>(
                 out_result.endTime - out_result.startTime).count();
             return TESTMATE_FAILURE(EErrorCode::kInvalidParameter, "Invalid limit_max");
@@ -144,7 +144,7 @@ CResult CLimitCheckStep::Execute(SStepResult& out_result) {
     out_result.measurements["limit_min"] = FormatValue(m_limitMin);
     out_result.measurements["limit_max"] = FormatValue(m_limitMax);
 
-    out_result.endTime = std::chrono::steady_clock::now();
+    out_result.endTime = std::chrono::system_clock::now();
     out_result.durationMs = std::chrono::duration_cast<std::chrono::milliseconds>(
         out_result.endTime - out_result.startTime).count();
 

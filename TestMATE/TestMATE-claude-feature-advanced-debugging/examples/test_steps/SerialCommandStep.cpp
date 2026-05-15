@@ -37,13 +37,13 @@ CSerialCommandStep::CSerialCommandStep(const TString& in_strId,
 }
 
 CResult CSerialCommandStep::Execute(SStepResult& out_result) {
-    out_result.startTime = std::chrono::steady_clock::now();
+    out_result.startTime = std::chrono::system_clock::now();
 
     auto portParam = GetParameter("port");
     if (!portParam.has_value()) {
         out_result.verdict = ETestVerdict::kError;
         out_result.message = "Missing port parameter";
-        out_result.endTime = std::chrono::steady_clock::now();
+        out_result.endTime = std::chrono::system_clock::now();
         return TESTMATE_FAILURE(EErrorCode::kInvalidParameter, "Missing port");
     }
     m_strPort = portParam.value();
@@ -52,7 +52,7 @@ CResult CSerialCommandStep::Execute(SStepResult& out_result) {
     if (!cmdParam.has_value()) {
         out_result.verdict = ETestVerdict::kError;
         out_result.message = "Missing command parameter";
-        out_result.endTime = std::chrono::steady_clock::now();
+        out_result.endTime = std::chrono::system_clock::now();
         return TESTMATE_FAILURE(EErrorCode::kInvalidParameter, "Missing command");
     }
     m_strCommand = cmdParam.value();
@@ -68,7 +68,7 @@ CResult CSerialCommandStep::Execute(SStepResult& out_result) {
     if (!connectResult.IsSuccess()) {
         out_result.verdict = ETestVerdict::kError;
         out_result.message = "Failed to connect to " + m_strPort;
-        out_result.endTime = std::chrono::steady_clock::now();
+        out_result.endTime = std::chrono::system_clock::now();
         return connectResult;
     }
 
@@ -78,7 +78,7 @@ CResult CSerialCommandStep::Execute(SStepResult& out_result) {
         serial.Close();
         out_result.verdict = ETestVerdict::kError;
         out_result.message = "Failed to send command";
-        out_result.endTime = std::chrono::steady_clock::now();
+        out_result.endTime = std::chrono::system_clock::now();
         return sendResult;
     }
 
@@ -94,7 +94,7 @@ CResult CSerialCommandStep::Execute(SStepResult& out_result) {
 
     out_result.verdict = ETestVerdict::kPass;
     out_result.message = "Command sent successfully";
-    out_result.endTime = std::chrono::steady_clock::now();
+    out_result.endTime = std::chrono::system_clock::now();
     out_result.durationMs = std::chrono::duration_cast<std::chrono::milliseconds>(
         out_result.endTime - out_result.startTime).count();
 

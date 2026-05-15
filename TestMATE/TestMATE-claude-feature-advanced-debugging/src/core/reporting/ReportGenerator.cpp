@@ -17,12 +17,16 @@ namespace TestMATE {
 
 namespace {
 
-TString TimePointToString(const TTimePoint& /*tp*/) {
-    // Since TTimePoint uses steady_clock, we use current system time for display
-    auto now = std::chrono::system_clock::now();
-    auto time = std::chrono::system_clock::to_time_t(now);
+TString TimePointToString(const TWallClock& tp) {
+    auto time = std::chrono::system_clock::to_time_t(tp);
+    std::tm tmBuf{};
+#ifdef _WIN32
+    localtime_s(&tmBuf, &time);
+#else
+    localtime_r(&time, &tmBuf);
+#endif
     std::ostringstream oss;
-    oss << std::put_time(std::localtime(&time), "%Y-%m-%d %H:%M:%S");
+    oss << std::put_time(&tmBuf, "%Y-%m-%d %H:%M:%S");
     return oss.str();
 }
 
@@ -285,7 +289,7 @@ STestReport CReportManager::CreateReport(const TString& in_strSequenceName) {
     report.reportId = "RPT-" + std::to_string(
         std::chrono::steady_clock::now().time_since_epoch().count());
     report.sequenceName = in_strSequenceName;
-    report.startTime = std::chrono::steady_clock::now();
+    report.startTime = std::chrono::system_clock::now();
     return report;
 }
 
@@ -302,7 +306,7 @@ void CReportManager::AddResult(STestReport& io_report, const STestResult& in_res
 }
 
 void CReportManager::FinalizeReport(STestReport& io_report) {
-    io_report.endTime = std::chrono::steady_clock::now();
+    io_report.endTime = std::chrono::system_clock::now();
     io_report.totalDurationMs = std::chrono::duration_cast<std::chrono::milliseconds>(
         io_report.endTime - io_report.startTime).count();
 

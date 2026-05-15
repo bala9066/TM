@@ -133,7 +133,7 @@ private:
     SExecutionStatus m_status;
     STestReport m_report;
     TVector<STestResult> m_vecResults;
-    TTimePoint m_startTime;
+    TWallClock m_startTime;
 
     FStepStartCallback m_stepStartCallback;
     FStepCompleteCallback m_stepCompleteCallback;

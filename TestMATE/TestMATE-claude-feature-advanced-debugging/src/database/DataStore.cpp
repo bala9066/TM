@@ -110,8 +110,8 @@ CResult CMemoryDataStore::GetTestDataByLot(const TString& in_strLotId,
     return TESTMATE_SUCCESS();
 }
 
-CResult CMemoryDataStore::GetTestDataByDateRange(const TTimePoint& in_start,
-                                                  const TTimePoint& in_end,
+CResult CMemoryDataStore::GetTestDataByDateRange(const TWallClock& in_start,
+                                                  const TWallClock& in_end,
                                                   TVector<STestDataRecord>& out_records) {
     if (!m_bConnected) {
         return TESTMATE_FAILURE(EErrorCode::kConnectionFailed, "Not connected");

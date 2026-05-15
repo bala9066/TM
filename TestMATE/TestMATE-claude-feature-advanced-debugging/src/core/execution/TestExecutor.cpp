@@ -28,7 +28,7 @@ CResult CTestExecutor::Execute(CTestSequence& io_sequence, const SExecutionConfi
     m_config = in_config;
     m_bAbortRequested = false;
     m_bPauseRequested = false;
-    m_startTime = std::chrono::steady_clock::now();
+    m_startTime = std::chrono::system_clock::now();
 
     // Initialize status and report under the lock: GetStatus()/GetReport()/
     // GetResults() read these members concurrently from other threads.
@@ -147,11 +147,11 @@ CResult CTestExecutor::ExecuteStep(ITestStep* io_pStep, TUInt32 in_uiIndex) {
     }
 
     SStepResult stepResult;
-    stepResult.startTime = std::chrono::steady_clock::now();
+    stepResult.startTime = std::chrono::system_clock::now();
 
     CResult execResult = io_pStep->Execute(stepResult);
 
-    stepResult.endTime = std::chrono::steady_clock::now();
+    stepResult.endTime = std::chrono::system_clock::now();
     stepResult.durationMs = std::chrono::duration_cast<std::chrono::milliseconds>(
         stepResult.endTime - stepResult.startTime).count();
 
@@ -248,7 +248,7 @@ void CTestExecutor::UpdateProgress() {
         if (m_status.totalSteps > 0) {
             m_status.progress = static_cast<TDouble>(m_status.currentStepIndex + 1) / m_status.totalSteps;
         }
-        auto now = std::chrono::steady_clock::now();
+        auto now = std::chrono::system_clock::now();
         m_status.elapsedMs = std::chrono::duration_cast<std::chrono::milliseconds>(
             now - m_startTime).count();
         progress = m_status.progress;
@@ -279,7 +279,7 @@ void CTestExecutor::NotifyProgress(TDouble in_fProgress, const TString& in_strMe
 void CTestExecutor::FinalizeReport(bool in_bSuccess) {
     std::lock_guard<std::mutex> lock(m_mutex);
 
-    m_report.endTime = std::chrono::steady_clock::now();
+    m_report.endTime = std::chrono::system_clock::now();
     m_report.totalDurationMs = std::chrono::duration_cast<std::chrono::milliseconds>(
         m_report.endTime - m_report.startTime).count();
 

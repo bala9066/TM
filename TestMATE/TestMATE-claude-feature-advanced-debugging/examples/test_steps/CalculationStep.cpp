@@ -65,7 +65,7 @@ CCalculationStep::CCalculationStep(const TString& in_strId,
 }
 
 CResult CCalculationStep::Execute(SStepResult& out_result) {
-    out_result.startTime = std::chrono::steady_clock::now();
+    out_result.startTime = std::chrono::system_clock::now();
 
     // Parse operation type
     auto opParam = GetParameter("operation");
@@ -85,7 +85,7 @@ CResult CCalculationStep::Execute(SStepResult& out_result) {
         else {
             out_result.verdict = ETestVerdict::kError;
             out_result.message = "Unknown operation type: " + op;
-            out_result.endTime = std::chrono::steady_clock::now();
+            out_result.endTime = std::chrono::system_clock::now();
             out_result.durationMs = std::chrono::duration_cast<std::chrono::milliseconds>(
                 out_result.endTime - out_result.startTime).count();
             return TESTMATE_FAILURE(EErrorCode::kInvalidParameter, "Unknown operation");
@@ -96,7 +96,7 @@ CResult CCalculationStep::Execute(SStepResult& out_result) {
     if (!ParseOperands()) {
         out_result.verdict = ETestVerdict::kError;
         out_result.message = "Failed to parse operand values";
-        out_result.endTime = std::chrono::steady_clock::now();
+        out_result.endTime = std::chrono::system_clock::now();
         out_result.durationMs = std::chrono::duration_cast<std::chrono::milliseconds>(
             out_result.endTime - out_result.startTime).count();
         return TESTMATE_FAILURE(EErrorCode::kInvalidParameter, "Invalid operands");
@@ -124,7 +124,7 @@ CResult CCalculationStep::Execute(SStepResult& out_result) {
     } catch (const std::exception& e) {
         out_result.verdict = ETestVerdict::kError;
         out_result.message = TString("Calculation error: ") + e.what();
-        out_result.endTime = std::chrono::steady_clock::now();
+        out_result.endTime = std::chrono::system_clock::now();
         out_result.durationMs = std::chrono::duration_cast<std::chrono::milliseconds>(
             out_result.endTime - out_result.startTime).count();
         return TESTMATE_FAILURE(EErrorCode::kExecutionFailed, e.what());
@@ -148,7 +148,7 @@ CResult CCalculationStep::Execute(SStepResult& out_result) {
         out_result.measurements[name] = opOss.str();
     }
 
-    out_result.endTime = std::chrono::steady_clock::now();
+    out_result.endTime = std::chrono::system_clock::now();
     out_result.durationMs = std::chrono::duration_cast<std::chrono::milliseconds>(
         out_result.endTime - out_result.startTime).count();
 

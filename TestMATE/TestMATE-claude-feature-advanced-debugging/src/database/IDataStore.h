@@ -49,7 +49,7 @@ struct STestDataRecord {
     TString sequenceName;
     TString deviceId;
     TString lotId;
-    TTimePoint timestamp;
+    TWallClock timestamp;
     ETestVerdict verdict{ETestVerdict::kNone};
     TInt64 durationMs{0};
     std::map<TString, TString> measurements;
@@ -82,8 +82,8 @@ public:
     virtual SQueryResult Query(const TString& in_strQuery) = 0;
     virtual CResult GetTestDataByLot(const TString& in_strLotId,
                                       TVector<STestDataRecord>& out_records) = 0;
-    virtual CResult GetTestDataByDateRange(const TTimePoint& in_start,
-                                           const TTimePoint& in_end,
+    virtual CResult GetTestDataByDateRange(const TWallClock& in_start,
+                                           const TWallClock& in_end,
                                            TVector<STestDataRecord>& out_records) = 0;
 
     // Transactions
@@ -112,8 +112,8 @@ public:
     SQueryResult Query(const TString& in_strQuery) override;
     CResult GetTestDataByLot(const TString& in_strLotId,
                               TVector<STestDataRecord>& out_records) override;
-    CResult GetTestDataByDateRange(const TTimePoint& in_start,
-                                   const TTimePoint& in_end,
+    CResult GetTestDataByDateRange(const TWallClock& in_start,
+                                   const TWallClock& in_end,
                                    TVector<STestDataRecord>& out_records) override;
 
     CResult BeginTransaction() override;

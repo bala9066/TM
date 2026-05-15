@@ -12,7 +12,7 @@
 namespace TestMATE {
 
 CTestSequence::CTestSequence() {
-    m_info.createdDate = std::chrono::steady_clock::now();
+    m_info.createdDate = std::chrono::system_clock::now();
     m_info.modifiedDate = m_info.createdDate;
 }
 
@@ -29,7 +29,7 @@ TUInt32 CTestSequence::AddStep(TUniquePtr<ITestStep> in_pStep) {
     }
 
     m_vecSteps.push_back(std::move(in_pStep));
-    m_info.modifiedDate = std::chrono::steady_clock::now();
+    m_info.modifiedDate = std::chrono::system_clock::now();
 
     return static_cast<TUInt32>(m_vecSteps.size() - 1);
 }
@@ -46,7 +46,7 @@ CResult CTestSequence::InsertStep(TUInt32 in_uiIndex, TUniquePtr<ITestStep> in_p
     }
 
     m_vecSteps.insert(m_vecSteps.begin() + in_uiIndex, std::move(in_pStep));
-    m_info.modifiedDate = std::chrono::steady_clock::now();
+    m_info.modifiedDate = std::chrono::system_clock::now();
 
     return TESTMATE_SUCCESS();
 }
@@ -58,7 +58,7 @@ CResult CTestSequence::RemoveStep(TUInt32 in_uiIndex) {
     }
 
     m_vecSteps.erase(m_vecSteps.begin() + in_uiIndex);
-    m_info.modifiedDate = std::chrono::steady_clock::now();
+    m_info.modifiedDate = std::chrono::system_clock::now();
 
     return TESTMATE_SUCCESS();
 }
@@ -75,7 +75,7 @@ CResult CTestSequence::RemoveStepById(const TString& in_strId) {
     }
 
     m_vecSteps.erase(it);
-    m_info.modifiedDate = std::chrono::steady_clock::now();
+    m_info.modifiedDate = std::chrono::system_clock::now();
 
     return TESTMATE_SUCCESS();
 }
@@ -135,14 +135,14 @@ CResult CTestSequence::MoveStep(TUInt32 in_uiFromIndex, TUInt32 in_uiToIndex) {
     }
 
     m_vecSteps.insert(m_vecSteps.begin() + in_uiToIndex, std::move(step));
-    m_info.modifiedDate = std::chrono::steady_clock::now();
+    m_info.modifiedDate = std::chrono::system_clock::now();
 
     return TESTMATE_SUCCESS();
 }
 
 void CTestSequence::Clear() {
     m_vecSteps.clear();
-    m_info.modifiedDate = std::chrono::steady_clock::now();
+    m_info.modifiedDate = std::chrono::system_clock::now();
 }
 
 void CTestSequence::SetVariable(const TString& in_strName, const TString& in_strValue) {

@@ -383,7 +383,7 @@ CResult CSqliteDataStore::GetTestDataByLot(const TString& in_strLotId, TVector<S
     return TESTMATE_SUCCESS();
 }
 
-CResult CSqliteDataStore::GetTestDataByDateRange(const TTimePoint& /*in_start*/, const TTimePoint& /*in_end*/, TVector<STestDataRecord>& out_records) {
+CResult CSqliteDataStore::GetTestDataByDateRange(const TWallClock& /*in_start*/, const TWallClock& /*in_end*/, TVector<STestDataRecord>& out_records) {
     std::lock_guard<std::mutex> lock(m_dbMutex);
 
     if (!m_bConnected) {

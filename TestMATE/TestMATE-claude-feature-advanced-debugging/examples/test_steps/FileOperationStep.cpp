@@ -38,14 +38,14 @@ CFileOperationStep::CFileOperationStep(const TString& in_strId,
 }
 
 CResult CFileOperationStep::Execute(SStepResult& out_result) {
-    out_result.startTime = std::chrono::steady_clock::now();
+    out_result.startTime = std::chrono::system_clock::now();
 
     // Get operation type
     auto opParam = GetParameter("operation");
     if (!opParam.has_value()) {
         out_result.verdict = ETestVerdict::kError;
         out_result.message = "Missing operation parameter";
-        out_result.endTime = std::chrono::steady_clock::now();
+        out_result.endTime = std::chrono::system_clock::now();
         return TESTMATE_FAILURE(EErrorCode::kInvalidParameter, "Missing operation");
     }
 
@@ -58,7 +58,7 @@ CResult CFileOperationStep::Execute(SStepResult& out_result) {
     else {
         out_result.verdict = ETestVerdict::kError;
         out_result.message = "Unknown operation: " + op;
-        out_result.endTime = std::chrono::steady_clock::now();
+        out_result.endTime = std::chrono::system_clock::now();
         return TESTMATE_FAILURE(EErrorCode::kInvalidParameter, "Unknown operation");
     }
 
@@ -67,7 +67,7 @@ CResult CFileOperationStep::Execute(SStepResult& out_result) {
     if (!pathParam.has_value()) {
         out_result.verdict = ETestVerdict::kError;
         out_result.message = "Missing file_path parameter";
-        out_result.endTime = std::chrono::steady_clock::now();
+        out_result.endTime = std::chrono::system_clock::now();
         return TESTMATE_FAILURE(EErrorCode::kInvalidParameter, "Missing file_path");
     }
     m_strFilePath = pathParam.value();
@@ -100,7 +100,7 @@ CResult CFileOperationStep::Execute(SStepResult& out_result) {
             result = TESTMATE_FAILURE(EErrorCode::kInvalidParameter, "Unknown operation");
     }
 
-    out_result.endTime = std::chrono::steady_clock::now();
+    out_result.endTime = std::chrono::system_clock::now();
     out_result.durationMs = std::chrono::duration_cast<std::chrono::milliseconds>(
         out_result.endTime - out_result.startTime).count();
 

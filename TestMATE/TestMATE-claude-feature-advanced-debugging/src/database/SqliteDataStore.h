@@ -56,7 +56,7 @@ public:
                                                     const TVector<TQueryParameter>& in_parameters);
 
     [[nodiscard]] CResult GetTestDataByLot(const TString& in_strLotId, TVector<STestDataRecord>& out_records) override;
-    [[nodiscard]] CResult GetTestDataByDateRange(const TTimePoint& in_start, const TTimePoint& in_end, TVector<STestDataRecord>& out_records) override;
+    [[nodiscard]] CResult GetTestDataByDateRange(const TWallClock& in_start, const TWallClock& in_end, TVector<STestDataRecord>& out_records) override;
 
     [[nodiscard]] CResult BeginTransaction() override;
     [[nodiscard]] CResult CommitTransaction() override;

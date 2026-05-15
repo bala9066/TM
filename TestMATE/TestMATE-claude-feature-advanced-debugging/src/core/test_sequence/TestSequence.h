@@ -24,8 +24,8 @@ struct SSequenceInfo {
     TString version;
     TString author;
     TString description;
-    TTimePoint createdDate;
-    TTimePoint modifiedDate;
+    TWallClock createdDate;
+    TWallClock modifiedDate;
     std::map<TString, TString> properties;
 };
 
